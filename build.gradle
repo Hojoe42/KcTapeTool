@@ -1,0 +1,51 @@
+
+plugins {
+    id 'application'
+    id 'eclipse'
+    id 'ivy-publish'
+}
+
+group = 'de.hojoe.kctapetool'
+version = '0.1.0'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+eclipseJdt.doLast {
+    File f = file('.settings/org.eclipse.core.resources.prefs')
+    f.write('eclipse.preferences.version=1\n')
+    f.append('encoding/<project>=UTF-8')
+}
+
+application {
+    mainClass.set('de.hojoe.kctapetool.KcTapeTool')
+}
+
+jar {
+    manifest {
+        attributes('Main-Class':             'de.hojoe.kctapetool.KcTapeTool',
+                   'Implementation-Title':   'KC Tape Tool',
+                   'Implementation-Version': "${version}")
+    }
+}
+
+dependencies {
+    implementation 'info.picocli:picocli:4.7.0'
+    implementation 'commons-io:commons-io:2.11.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+}
+
+repositories {
+    ivy {
+        name "ivy"
+        url "file://d:/programmierung/ivy-repository"
+    }
+    mavenCentral()
+}
+
+test {
+    useJUnitPlatform()
+}
+
