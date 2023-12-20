@@ -1,7 +1,12 @@
 package de.hojoe.kctapetool;
 
+import java.util.Arrays;
+
 /* package */ class KcDateiBlock
 {
+  /** Größe eines Blocks auf der Kassette. */
+  public static final int BLOCK_SIZE = 128;
+
   /** gelesene Blocknummer, 1 bis, letzter Block FF */
   private int blocknummer;
   /** die gelesene Checksumme */
@@ -12,9 +17,9 @@ package de.hojoe.kctapetool;
   {
     this.blocknummer = blocknummer;
     this.checksumme = checksumme;
-    if( blockDaten.length != 128 )
+    if( blockDaten.length != BLOCK_SIZE )
     {
-      throw new IllegalArgumentException("Die Block Daten müssen genau 128 Byte lang sein: " + blockDaten.length);
+      throw new IllegalArgumentException("Die Block Daten müssen genau "+ BLOCK_SIZE +" Bytes lang sein: " + blockDaten.length);
     }
     daten = blockDaten;
   }
@@ -34,7 +39,7 @@ package de.hojoe.kctapetool;
     return daten;
   }
 
-  public int berechneChecksumme()
+  public static int berechneChecksumme(byte[] daten)
   {
     int summe = 0;
     for( byte element : daten )
@@ -43,5 +48,13 @@ package de.hojoe.kctapetool;
     }
     return 0xff & summe;
   }
+
+  @Override
+  public String toString()
+  {
+    return "KcDateiBlock [blocknummer=" + blocknummer + ", checksumme=" + checksumme + ", daten=" + Arrays.toString(daten) + "]";
+  }
+
+
 
 }

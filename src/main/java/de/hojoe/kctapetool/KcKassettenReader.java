@@ -40,7 +40,7 @@ public class KcKassettenReader
           System.out.println("Name: " + kcDatei.getDateiname());
         }
         System.out.printf("%02X", blocknummer);
-        if( block.berechneChecksumme() == block.getChecksumme() )
+        if( KcDateiBlock.berechneChecksumme(block.getDaten()) == block.getChecksumme() )
         {
           System.out.print("> ");
         }
@@ -48,7 +48,7 @@ public class KcKassettenReader
         {
           System.out.print("? ");
           System.out.println("\nChecksumme gelesen: " + Integer.toHexString(block.getChecksumme()) + " berechnet: " +
-            Integer.toHexString((block.berechneChecksumme())));
+            Integer.toHexString((KcDateiBlock.berechneChecksumme(block.getDaten()))));
         }
         if( blocknummer == 255 )
         {

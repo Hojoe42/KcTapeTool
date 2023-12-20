@@ -6,43 +6,52 @@ import java.util.*;
 
 import javax.sound.sampled.*;
 
+/**
+ * Liest einen {@link AudioInputStream} und kopiert die Daten in mehrere {@link AudioInputStream}s.
+ *
+ * @author Holger Jödicke
+ */
 public class StreamCopy
 {
-  boolean running = false;
   private AudioInputStream inputStream;
   private List<OutputStream> outputStreams = new ArrayList<>();
+  private List<AudioInputStream> audioStreams = new ArrayList<>();
 
-  public StreamCopy(AudioInputStream inputStream)
+  /**
+   *
+   * @param inputStream der Quell Stream.
+   */
+  public StreamCopy(AudioInputStream inputStream, int anzahl)
   {
-    this.inputStream = inputStream;
-  }
-
-  public AudioInputStream createAudioInputStream()
-  {
-    if( running )
+    this.inputStream = Objects.requireNonNull(inputStream);
+    AudioFormat audioFormat = inputStream.getFormat();
+    for( int i = 0; i < anzahl; i++ )
     {
-      throw new IllegalStateException("Streams müssen vor dem Beginn des Kopierens erzeugt werden.");
+      try
+      {
+        PipedOutputStream pipedOutputStream = new PipedOutputStream();
+        outputStreams.add(pipedOutputStream);
+        AudioInputStream audioInputStream = new AudioInputStream(new PipedInputStream(pipedOutputStream), audioFormat, AudioSystem.NOT_SPECIFIED);
+        audioStreams.add(audioInputStream);
+      }
+      catch( IOException e )
+      {
+        throw new RuntimeException(e);
+      }
     }
-    PipedOutputStream pipedOutputStream = new PipedOutputStream();
-    outputStreams.add(pipedOutputStream);
-    try
-    {
-      return new AudioInputStream(new PipedInputStream(pipedOutputStream), inputStream.getFormat(), AudioSystem.NOT_SPECIFIED);
-    }
-    catch( IOException e )
-    {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void start()
-  {
-    running = true;
     new Thread(new StreamCopyRunnable()).start();
   }
 
   /**
-   * Kopiert alle Daten aus dem InputStream in die Target Streams. Das Runnable läuft bis der Input
+   * Liefert alle Ziel {@link AudioInputStream}s.
+   */
+  public List<AudioInputStream> getAudioStreams()
+  {
+    return Collections.unmodifiableList(audioStreams);
+  }
+
+  /**
+   * Kopiert alle Daten aus dem InputStream in die Ziel Streams. Das Runnable läuft bis der Input
    * Stream -1 oder eine Exception liefert.
    *
    * @author Holger Jödicke
@@ -70,6 +79,7 @@ public class StreamCopy
       }
       catch( IOException e )
       {
+        // @todo 2023-08-14 Exception irgendwie zur Verfügung stellen
         e.printStackTrace();
       }
     }
@@ -81,10 +91,10 @@ public class StreamCopy
     Path path1 = Paths.get("d:/tmp/kc/Test-Out1.wav");
     Path path2 = Paths.get("d:/tmp/kc/Test-Out2.wav");
     AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(path.toFile());
-    StreamCopy streamCopy = new StreamCopy(audioInputStream);
-    AudioInputStream ais1 = streamCopy.createAudioInputStream();
-    AudioInputStream ais2 = streamCopy.createAudioInputStream();
-    streamCopy.start();
+    StreamCopy streamCopy = new StreamCopy(audioInputStream, 2);
+    List<AudioInputStream> kopien = streamCopy.getAudioStreams();
+    AudioInputStream ais1 = kopien.get(0);
+    AudioInputStream ais2 = kopien.get(1);
     AudioSystem.write(ais1, AudioFileFormat.Type.WAVE, path1.toFile());
     AudioSystem.write(ais2, AudioFileFormat.Type.WAVE, path2.toFile());
   }

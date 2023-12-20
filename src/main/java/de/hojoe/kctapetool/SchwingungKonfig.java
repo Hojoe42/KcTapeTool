@@ -31,7 +31,7 @@ public class SchwingungKonfig
 
   interface BitKonfig
   {
-
+    /** Liefert die Schwingungs-Frequenz dieses Bits */
     int getFrequenz();
 
     /** Anzahl der Frames bei einer Abtastrate von 44100 */

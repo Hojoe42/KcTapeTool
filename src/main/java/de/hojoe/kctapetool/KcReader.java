@@ -12,10 +12,18 @@ import picocli.CommandLine.*;
 
 /**
  * Implementation des 'read' Kommandos.
+ * <p>
+ * Beispielaufrufe:
+ * <pre>
+   read -l
+   read -i Eingang
+   read -f HANOI.wav
+ * <pre>
  *
  * @author Holger Jödicke
  */
-@Command(name = "read", description = "Kommando zum Lesen von Audiodaten, insbesondere von Daten die mit 'SAVE' auf dem KC gespeicherten werden oder zum Lesen von WAVE Dateien")
+@Command(name = "read",
+         description = "Kommando zum Lesen von Audiodaten, insbesondere von Daten die mit 'SAVE' auf dem KC gespeicherten werden oder zum Lesen von WAVE Dateien")
 public class KcReader implements Callable<Integer>
 {
 
@@ -28,7 +36,7 @@ public class KcReader implements Callable<Integer>
   boolean usageHelpRequested;
 
   @Option(names = {"-l", "--list-sources"},
-          description = "Liste aller Sound Eingänge ausgeben und beendet das Programm")
+          description = "Liste aller Sound Eingänge ausgeben und beenden des Programms")
   private boolean listSources;
 
   @Option(names = {"-f", "--file"},
@@ -52,8 +60,7 @@ public class KcReader implements Callable<Integer>
   {
     if( listSources )
     {
-      System.out.println("Verfügbare Input Geräte:");
-      getAlleInputGeraeteNamen().forEach(s -> System.out.println("  " + s));
+      listInputGeraete();
       return KcTapeTool.RC_OK;
     }
     try
@@ -81,11 +88,11 @@ public class KcReader implements Callable<Integer>
       }
       System.out.println("Starte Aufnahme (Abbruch mit Ctrl + C)");
 
-// Kopie dazwischen schmuggeln
-      StreamCopy streamCopy = new StreamCopy(ais);
-      ais = streamCopy.createAudioInputStream();
-      AudioInputStream aisKopie = streamCopy.createAudioInputStream();
-      streamCopy.start();
+      // eine Kopie der gelesenen Daten in eine extra Datei schreiben
+      StreamCopy streamCopy = new StreamCopy(ais, 2);
+      List<AudioInputStream> streams = streamCopy.getAudioStreams();
+      ais = streams.get(0);
+      AudioInputStream aisKopie = streams.get(1);
       new Thread(new Runnable()
       {
         @Override
@@ -131,42 +138,12 @@ public class KcReader implements Callable<Integer>
     return kcDatei.isBasicDateiType() ? new BasicConverter() : new CaosKonverter();
   }
 
-  /**
-   * Liefert die Namen aller Sound Input Geräte / Mixer. Mit diesem Namen kann sich der passende
-   * Mixer mittels <code>AudioSystem.getMixer(mixerInfo)</code> geholt werden.
-   */
-  private List<String> getAlleInputGeraeteNamen()
-  {
-    ArrayList<String> namen = new ArrayList<>();
-    for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
-    {
-      Mixer mixer = AudioSystem.getMixer(mixerInfo);
-      for( Line.Info targetLineInfo : mixer.getTargetLineInfo() )
-      {
-        try
-        {
-          Line line = AudioSystem.getLine(targetLineInfo);
-          if( line instanceof TargetDataLine )
-          {
-            namen.add(mixerInfo.getName());
-          }
-        }
-        catch( Exception e )
-        {
-          System.out.println("Line für " + targetLineInfo + " nicht verfügbar: " + e.getMessage());
-          continue;
-        }
-      }
-    }
-    return namen;
-  }
-
   private AudioInput createAudioInputStream()
   {
     Mixer mixer;
     if( inputSourceName.isEmpty() )
     {
-      mixer = getDefaultMixer();
+      mixer = AudioGeraete.getDefaultInputMixer();
       if( mixer == null )
       {
         System.out.println("Keinen Default Eingangs Quelle gefunden, beende Programm.");
@@ -176,7 +153,7 @@ public class KcReader implements Callable<Integer>
     }
     else
     {
-      mixer = getMixer(inputSourceName);
+      mixer = AudioGeraete.getMixer(inputSourceName);
       if( mixer == null )
       {
         System.out.println("Keine Quelle gefunden welche mit \"" + inputSourceName + "\" beginnt, beende Programm.");
@@ -205,41 +182,15 @@ public class KcReader implements Callable<Integer>
     }
   }
 
-  private Mixer getMixer(String inputSourceName)
+  private void listInputGeraete()
   {
-    for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
+    System.out.println("Verfügbare Sound Eingabe Geräte (* default):");
+    Mixer defaultMixer = AudioGeraete.getDefaultInputMixer();
+    for( Mixer mixer : AudioGeraete.getAlleInputGeraeteNamen() )
     {
-      if( mixerInfo.getName().startsWith(inputSourceName) )
-      {
-        return AudioSystem.getMixer(mixerInfo);
-      }
+      String prefix = Objects.equals(defaultMixer, mixer) ? "  (*) " : "      ";
+      System.out.println(prefix + mixer.getMixerInfo().getName());
     }
-    return null;
-  }
-
-  private Mixer getDefaultMixer()
-  {
-    for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
-    {
-      Mixer mixer = AudioSystem.getMixer(mixerInfo);
-      for( Line.Info targetLineInfo : mixer.getTargetLineInfo() )
-      {
-        try
-        {
-          Line line = AudioSystem.getLine(targetLineInfo);
-          if( line instanceof TargetDataLine )
-          {
-            return mixer;
-          }
-        }
-        catch( Exception e )
-        {
-          System.out.println("Line für " + targetLineInfo + " nicht verfügbar: " + e.getMessage());
-          continue;
-        }
-      }
-    }
-    return null;
   }
 
   /**

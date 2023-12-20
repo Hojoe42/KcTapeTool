@@ -48,8 +48,12 @@ public class KcTapeTool implements Runnable
 //    args = new String[] { "-V" };
 //    args = new String[] { "--help" };
 //    args = new String[] { "read", "-l" };
+//    args = new String[] { "write", "-l" };
+//    args = new String[] { "write" };
+//    args = new String[] { "write", "d:/tmp/kc/CAOS_E.KCC" };
 //    args = new String[] { "read" };
 //    args = new String[] { "read", "-i", "Eingang" };
+//    args = new String[] { "read", "-i", "Eingang (Realtek(R) Audio)" };
 //    args = new String[] { "read", "-f", "CopyStream1.wav" };
 //    args = new String[] { "read", "-f", "HANOI.wav" };
 //    args = new String[] { "read", "-f", "tatum.wav" };

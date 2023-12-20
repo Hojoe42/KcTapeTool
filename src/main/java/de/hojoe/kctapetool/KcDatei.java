@@ -32,7 +32,7 @@ public class KcDatei
       if( bloecke.size() > index )
       {
         KcDateiBlock alt = bloecke.get(index);
-        if( alt.berechneChecksumme() != alt.getChecksumme() )
+        if( KcDateiBlock.berechneChecksumme(alt.getDaten()) != alt.getChecksumme() )
         {
           bloecke.set(index, block);
         }

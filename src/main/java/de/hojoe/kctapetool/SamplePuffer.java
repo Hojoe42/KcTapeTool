@@ -1,18 +1,29 @@
 package de.hojoe.kctapetool;
 
+/**
+ * Sammelt die Daten / Bytes für ein Audio Sample bis maximal 32 Bit auf.
+ *
+ *
+ * @author Holger Jödicke
+ */
 public class SamplePuffer
 {
   private int sample;
   private int currentBit = 0;
   private int highestBit;
 
+  /**
+   * Erzeugt den Puffer mit einer bestimmten Anzahl von Bits pro Sample.
+   *
+   * @param sampleSizeInBits Anzahl der relevanten Bits
+   */
   public SamplePuffer(int sampleSizeInBits)
   {
     highestBit = 1 << (sampleSizeInBits-1);
   }
 
   /**
-   * F�gt ein Byte hinzu.
+   * Fügt ein Byte hinzu.
    */
   public void add(byte b)
   {
@@ -27,8 +38,8 @@ public class SamplePuffer
   {
     if((sample & highestBit) == highestBit)
     {
-      // das höchst Bit ist gesetzt, es muss eine negative Zahl sein -> alle oberen Bits setzen
-      return sample | (highestBit *-1);
+      // das höchst Bit im Sample ist gesetzt, es muss eine negative Zahl sein -> alle weiteren oberen Bits setzen
+      return sample | (highestBit * -1);
     }
     return sample;
   }

@@ -1,8 +1,13 @@
-package de.hojoe.kctapetool;
+package de.hojoe.kctapetool.tools;
 
 import javax.sound.sampled.*;
 
-public class WavTest
+/**
+ * Liest die Soundgeräte aus und gibt die erreichbaren Informationen auf die Konsole aus.
+ *
+ * @author Holger Jödicke
+ */
+public class AnalyzeSoundDevices
 {
 
   private static void printSoundInputs()
@@ -19,6 +24,24 @@ public class WavTest
       {
         System.out.println("  " + info);
       }
+      System.out.println("CD Player Eingänge:");
+      for( Line.Info info : AudioSystem.getSourceLineInfo(Port.Info.COMPACT_DISC) )
+      {
+        System.out.println("  " + info);
+      }
+      System.out.println("Line Out Ausgänge:");
+      for( Line.Info info : AudioSystem.getTargetLineInfo(Port.Info.LINE_OUT) )
+      {
+        System.out.println("  " + info);
+      }
+      System.out.println("Kopfhörer:");
+      for( Line.Info info : AudioSystem.getTargetLineInfo(Port.Info.HEADPHONE) )
+      {
+        System.out.println("  " + info);
+      }
+
+
+      System.out.println();
       System.out.println("Mixer Infos:");
       for(Mixer.Info  mixerInfo : AudioSystem.getMixerInfo())
       {
@@ -49,6 +72,14 @@ public class WavTest
             System.out.println("    !!! ???" + line);
           }
         }
+        for( Line.Info sourceLineInfo : mixer.getSourceLineInfo() )
+        {
+          System.out.println("    Source Line: " + sourceLineInfo);
+          Line line = AudioSystem.getLine(sourceLineInfo);
+          System.out.println("    Line: " + line);
+
+          System.out.println("    !!! ???" + line);
+        }
       }
     }
     catch( LineUnavailableException e )
@@ -57,7 +88,9 @@ public class WavTest
     }
   }
 
-
+  /**
+   * Startet die Soundgeräteanalyse.
+   */
   public static void main(String[] args) throws Exception
   {
     printSoundInputs();
