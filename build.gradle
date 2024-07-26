@@ -7,6 +7,7 @@ plugins {
 
 group = 'de.hojoe.kctapetool'
 version = '0.1.0'
+compileJava.options.encoding = 'UTF-8'
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -19,12 +20,18 @@ eclipseJdt.doLast {
 }
 
 application {
-    mainClass.set('de.hojoe.kctapetool.KcTapeTool')
+    mainClass.set('de.hojoe.kctapetool.KcTapeToolMain')
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 jar {
     manifest {
-        attributes('Main-Class':             'de.hojoe.kctapetool.KcTapeTool',
+        attributes('Main-Class':             'de.hojoe.kctapetool.KcTapeToolMain',
                    'Implementation-Title':   'KC Tape Tool',
                    'Implementation-Version': "${version}")
     }
@@ -34,7 +41,10 @@ dependencies {
     implementation 'info.picocli:picocli:4.7.0'
     implementation 'commons-io:commons-io:2.11.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+    testImplementation "org.mockito:mockito-core:3.+"
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 repositories {

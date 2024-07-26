@@ -4,6 +4,8 @@ import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
+import de.hojoe.kctapetool.charset.KcCaosCharsetProvider;
+
 /**
  * Repräsentiert eine Datei mit ihren einzelnen Daten-Blöcken.
  *
@@ -40,7 +42,7 @@ public class KcDatei
   }
 
   /**
-   * Liest den Dateiname und die Endung.
+   * Liefert den Dateiname und die Endung.
    * <p>
    * Nicht immer ist direkt in den Daten eine Dateiendung abgelegt, dann wird versucht eine passende
    * Endung zu finden. Bei Basic Dateien wird als Endung '.SSS' angenommen, ansonsten '.KCC'.
@@ -108,24 +110,18 @@ public class KcDatei
 
   private String getCaosDateiName(byte[] daten)
   {
-    StringBuilder sb = new StringBuilder();
-    for( int i = 0; i < 12; i++ )
-    {
-      /* @todo Konvertierung */
-      sb.append((char)daten[i]);
-    }
-    return sb.toString();
+    return new String(daten, 0,12, KcCaosCharsetProvider.CAOS_CHARSET);
   }
 
   private String getBasicDateiName(byte[] daten)
   {
-    StringBuilder sb = new StringBuilder();
-    for( int i = 3; i < 11; i++ )
-    {
-      /* @todo Konvertierung */
-      sb.append((char)daten[i]);
-    }
-    return sb.toString();
+    return new String(daten, 3,11, KcCaosCharsetProvider.CAOS_CHARSET);
+  }
+
+  @Override
+  public String toString()
+  {
+    return getFullDateiName() + ", Blöcke: " + bloecke.size();
   }
 
 }

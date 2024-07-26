@@ -14,7 +14,7 @@ public class AudioGeraete
 {
 
   /** {@link Info} Objekt für Aufnahme Geräte. */
-  private static final Line.Info targetLineInfo = new Line.Info(TargetDataLine.class);
+  private static final Line.Info inputLineInfo = new Line.Info(TargetDataLine.class);
 
   /** {@link Info} Objekt für Abspiel Geräte. */
   private static final Line.Info outputLineInfo = new Line.Info(SourceDataLine.class);
@@ -32,8 +32,9 @@ public class AudioGeraete
     ArrayList<Mixer> alleInputMixer = new ArrayList<>();
     for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
     {
+      @SuppressWarnings("resource")
       Mixer mixer = AudioSystem.getMixer(mixerInfo);
-      if( mixer.isLineSupported(targetLineInfo) )
+      if( mixer.isLineSupported(inputLineInfo) )
       {
         alleInputMixer.add(mixer);
       }
@@ -42,7 +43,7 @@ public class AudioGeraete
   }
 
   /**
-   * Liefert den Mixer mit dem angegebenen Namen oder der mit dem Namen beginnt.
+   * Liefert den Mixer der mit dem angegebenen Namen beginnt oder übereinstimmt.
    */
   public static Mixer getMixer(String inputSourceName)
   {
@@ -65,6 +66,7 @@ public class AudioGeraete
     ArrayList<Mixer> alleOutputMixer = new ArrayList<>();
     for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
     {
+      @SuppressWarnings("resource")
       Mixer mixer = AudioSystem.getMixer(mixerInfo);
       if( mixer.isLineSupported(outputLineInfo) )
       {
@@ -77,7 +79,7 @@ public class AudioGeraete
   public static Mixer getDefaultInputMixer()
   {
     Mixer defaultMixer = AudioSystem.getMixer(null);
-    if( defaultMixer != null && defaultMixer.isLineSupported(targetLineInfo) )
+    if( defaultMixer != null && defaultMixer.isLineSupported(inputLineInfo) )
     {
       // wird normalerweise nicht funktionieren, da der Default Mixer meist die Standardausgabe (und nicht Eingabe) ist
       return defaultMixer;
@@ -85,7 +87,7 @@ public class AudioGeraete
     for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
     {
       Mixer mixer = AudioSystem.getMixer(mixerInfo);
-      if( mixer.isLineSupported(targetLineInfo) )
+      if( mixer.isLineSupported(inputLineInfo) )
       {
         return mixer;
       }
