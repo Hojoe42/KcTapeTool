@@ -1,6 +1,6 @@
 package de.hojoe.kctapetool;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
@@ -71,8 +71,7 @@ public class GleitenderMittelwertStream implements IntegerStream
     Path zielPath = Paths.get("d:/tmp/kc/Test1_gm.wav");
     try( GleitenderMittelwertStream in =  new GleitenderMittelwertStream(new AudioMonoIntegerStream(AudioSystem.getAudioInputStream(quellPath.toFile())),5))
     {
-      TargetDataLine tdl = new TestTargetDataLine(audioFormat, in);
-      AudioInputStream ais = new AudioInputStream(tdl);
+      AudioInputStream ais = new AudioInputStream(new GwInputStream(in), audioFormat, AudioSystem.NOT_SPECIFIED);
       AudioSystem.write(ais, AudioFileFormat.Type.WAVE, zielPath.toFile());
     }
     catch( UnsupportedAudioFileException e )
@@ -81,5 +80,34 @@ public class GleitenderMittelwertStream implements IntegerStream
     }
 
   }
+
+  static class GwInputStream extends InputStream
+  {
+    private GleitenderMittelwertStream in;
+    private Integer tmp = null;
+
+    public GwInputStream(GleitenderMittelwertStream in)
+    {
+      this.in = in;
+    }
+
+    @Override
+    public int read() throws IOException
+    {
+      if(tmp == null)
+      {
+        if(!in.available())
+        {
+          return -1;
+        }
+        tmp = in.read();
+        return (tmp.intValue() >> 8) & 0xff;
+      }
+      int b = tmp.intValue() & 0xff;
+      tmp = null;
+      return b;
+    }
+  }
+
 
 }

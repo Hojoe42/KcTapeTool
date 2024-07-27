@@ -9,6 +9,9 @@ package de.hojoe.kctapetool;
 public class WaveAnalyzerException extends Exception
 {
 
+  /**
+   * Erzeugt die Exception mit der übergebenen Meldung.
+   */
   public WaveAnalyzerException(String message)
   {
     super(message);

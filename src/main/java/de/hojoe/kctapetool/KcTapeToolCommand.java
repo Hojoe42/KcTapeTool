@@ -10,7 +10,6 @@ import picocli.CommandLine.*;
  *
  * @author Holger Jödicke
  */
-
 @Command(name = "KcTapeTool", version = "0.1.0")
 public class KcTapeToolCommand implements Callable<Integer>
 {
@@ -160,6 +159,10 @@ public class KcTapeToolCommand implements Callable<Integer>
     this.timeout = timeout;
   }
 
+  /**
+   * Fügt den übergebenen {@link Path} an ein eventuell vorhandenes default Directory an. Wurde kein directory angegeben, dann wird der übergebenen
+   * {@link Path} unverändert zurück gegeben.
+   */
   public Path appendToDirectory(Path subPath)
   {
     if(directory != null)

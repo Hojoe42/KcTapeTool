@@ -1,13 +1,13 @@
 package de.hojoe.kctapetool;
 
-import java.io.IOException;
+import java.io.*;
 
 /**
  * Ein Input Stream zum Lesen von Integer Werten und nicht nur Bytes.
  *
  * @author Holger Jödicke
  */
-public interface IntegerStream extends AutoCloseable
+public interface IntegerStream extends Closeable
 {
 
   /**

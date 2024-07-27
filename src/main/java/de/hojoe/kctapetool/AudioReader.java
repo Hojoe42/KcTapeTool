@@ -2,8 +2,11 @@ package de.hojoe.kctapetool;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 import javax.sound.sampled.*;
+import javax.sound.sampled.Line.Info;
 
 
 /**
@@ -13,6 +16,8 @@ import javax.sound.sampled.*;
  */
 public class AudioReader
 {
+  /** {@link Info} Objekt für Aufnahme Geräte. */
+  private static final Line.Info inputLineInfo = new Line.Info(TargetDataLine.class);
 
   /**
    * Liest die angegebene WAV Datei ein, interpretiert die Signale und liefert die binären Daten in Form einer {@link KcDatei} zurück.
@@ -37,22 +42,37 @@ public class AudioReader
    *
    * @param inputMixerName Name des Sound Eingangs
    * @return eine {@link KcDatei} mit den binären Daten
+   * @throws TimeoutException wenn bis zum Ablauf des Timeouts keine Daten gefunden wurden
    */
-  public KcDatei leseMixerDaten(String inputMixerName)
+  public KcDatei leseMixerDaten(String inputMixerName, int readTimeout) throws TimeoutException
   {
-    try
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    AudioInput audioInput = createAudioInputStream(inputMixerName);
+    AudioInputStream ais = audioInput.ais;
+    audioInput.line.start();
+    try( NullDurchgangWaveAnalyzer waveAnalyzer = new NullDurchgangWaveAnalyzer(ais) )
     {
-      AudioInput audioInput = createAudioInputStream(inputMixerName);
-      AudioInputStream ais = audioInput.ais;
-      audioInput.line.start();
-      NullDurchgangWaveAnalyzer waveAnalyzer = new NullDurchgangWaveAnalyzer(ais);
       KcKassettenReader kcKassettenReader = new KcKassettenReader(waveAnalyzer);
+      executor.schedule(new RunnableImplementation(ais, kcKassettenReader), readTimeout, TimeUnit.SECONDS);
       KcDatei kcDatei = kcKassettenReader.leseDatei();
+      if(!kcKassettenReader.isAnfangGefunden())
+      {
+        throw new TimeoutException();
+      }
       return kcDatei;
     }
     catch( IOException e )
     {
       throw new RuntimeException("Fehler beim Lesen der Audiodaten von [" + inputMixerName + "].", e);
+    }
+    finally
+    {
+      executor.shutdownNow();
+      try
+      {
+        executor.awaitTermination(0, TimeUnit.SECONDS);
+      }
+      catch( InterruptedException e )  { /* ignore */  }
     }
   }
 
@@ -61,19 +81,46 @@ public class AudioReader
    *
    * @return den Mixername oder <code>null</code>, falls der Mixer nicht existiert
    */
+  @SuppressWarnings("resource")
   public String getEingabeMixerName(String mixerName)
   {
-    for( Mixer mixer : AudioGeraete.getAlleInputGeraeteNamen() )
+    Mixer mixer = getMixer(mixerName);
+    if( mixer == null )
     {
-      String name = mixer.getMixerInfo().getName();
-      if( name.startsWith(mixerName) )
+      return null;
+    }
+    return mixer.getMixerInfo().getName();
+  }
+
+  private Mixer getMixer(String mixerName)
+  {
+    for( Mixer mixer : getAlleEingabeMixer() )
+    {
+      if( mixer.getMixerInfo().getName().startsWith(mixerName) )
       {
-        return name;
+        return mixer;
       }
     }
     return null;
   }
 
+  /**
+   * Liefert alle mixer für die Soundeingabe.
+   */
+  public List<Mixer> getAlleEingabeMixer()
+  {
+    ArrayList<Mixer> alleInputMixer = new ArrayList<>();
+    for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
+    {
+      @SuppressWarnings("resource")
+      Mixer mixer = AudioSystem.getMixer(mixerInfo);
+      if( mixer.isLineSupported(inputLineInfo) )
+      {
+        alleInputMixer.add(mixer);
+      }
+    }
+    return alleInputMixer;
+  }
 
   public KcDatei load(Path path)
   {
@@ -127,8 +174,7 @@ public class AudioReader
       File fileIn = inputPath.toFile();
       AudioInputStream ais = AudioSystem.getAudioInputStream(fileIn);
       // Wrappen in einen CD Audio Stream
-      // todo ist eigentlich nicht immer notwendig, oder?
-      return AudioSystem.getAudioInputStream(getCdAudioFormat(), ais);
+      return AudioSystem.getAudioInputStream(createCdAudioFormat(), ais);
     }
     catch( UnsupportedAudioFileException e )
     {
@@ -141,7 +187,7 @@ public class AudioReader
     Mixer mixer;
     if( inputSourceName.isEmpty() )
     {
-      mixer = AudioGeraete.getDefaultInputMixer();
+      mixer = getDefaultInputMixer();
       if( mixer == null )
       {
         System.out.println("Keine default Eingangs Quelle gefunden, beende Programm.");
@@ -151,7 +197,7 @@ public class AudioReader
     }
     else
     {
-      mixer = AudioGeraete.getMixer(inputSourceName);
+      mixer = getMixer(inputSourceName);
       if( mixer == null )
       {
         System.out.println("Keine Quelle gefunden welche mit \"" + inputSourceName + "\" beginnt, beende Programm.");
@@ -159,7 +205,7 @@ public class AudioReader
       }
       System.out.println("Verwende Eingang \"" + mixer.getMixerInfo().getName() + "\"");
     }
-    AudioFormat audioFormat = getCdAudioFormat();
+    AudioFormat audioFormat = createCdAudioFormat();
     DataLine.Info targetDataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
     if( !mixer.isLineSupported(targetDataLineInfo) )
     {
@@ -181,9 +227,33 @@ public class AudioReader
   }
 
   /**
+   * Liefert den default Mixer für die Soundeingabe oder falls es keinen Default gibt den ersten Mixer kann.
+   *
+   * @return einen Mixer für die Soundeingabe oder <code>null</code>, falls keiner gefunden wurde.
+   */
+  public Mixer getDefaultInputMixer()
+  {
+    Mixer defaultMixer = AudioSystem.getMixer(null);
+    if( defaultMixer != null && defaultMixer.isLineSupported(inputLineInfo) )
+    {
+      // wird normalerweise nicht funktionieren, da der Default Mixer meist die Standardausgabe (und nicht Eingabe) ist
+      return defaultMixer;
+    }
+    for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
+    {
+      Mixer mixer = AudioSystem.getMixer(mixerInfo);
+      if( mixer.isLineSupported(inputLineInfo) )
+      {
+        return mixer;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Liefert das Audioformat für Stereo CD Qualität.
    */
-  private AudioFormat getCdAudioFormat()
+  private AudioFormat createCdAudioFormat()
   {
     float sampleRate = 44100;
     int sampleSizeInBits = 16;
@@ -193,10 +263,36 @@ public class AudioReader
     return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
   }
 
+  private static final class RunnableImplementation implements Runnable
+  {
+    private final AudioInputStream ais;
+    private final KcKassettenReader kcKassettenReader;
+
+    private RunnableImplementation(AudioInputStream ais, KcKassettenReader kcKassettenReader)
+    {
+      this.ais = ais;
+      this.kcKassettenReader = kcKassettenReader;
+    }
+
+    @Override
+    public void run()
+    {
+      if( !kcKassettenReader.isAnfangGefunden() )
+      {
+        try
+        {
+          ais.close();
+        }
+        catch( IOException e )
+        {
+          /* ignorieren */ }
+      }
+    }
+  }
+
   private static class AudioInput
   {
     private TargetDataLine line;
-
     private AudioInputStream ais;
 
     public AudioInput(TargetDataLine line, AudioInputStream ais)

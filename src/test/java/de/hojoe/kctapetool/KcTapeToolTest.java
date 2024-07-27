@@ -56,7 +56,7 @@ class KcTapeToolTest
 
     kcTapeTool.execute();
 
-    // läd die neue CAOS_E.KCC Datei aus dem Projekt Root
+    // lädt die neue CAOS_E.KCC Datei aus dem Projekt Root
     byte[] caosE = readAndDelete(Paths.get("CAOS_E.KCC"));
     // einige wichtige Werte manuell prüfen
     assertThat(caosE.length, is(640));
@@ -67,9 +67,28 @@ class KcTapeToolTest
     assertThat( start, is(0xE000));
     int ende = (0xff & caosE[19]) + 256 * (0xff & caosE[20]);
     assertThat( ende, is(0xE1FF));
-    // läd die originale CAOS_E.KCC Datei aus dem Test Resources Verzeichnis
+    // lädt die originale CAOS_E.KCC Datei aus dem Test Resources Verzeichnis
     byte[] originalCaosE = Files.readAllBytes(createPath("/CAOS_E.KCC"));
     assertThat(caosE, is(originalCaosE));
+  }
+
+  @Test
+  void testWaveFile2KccMitDefaultDirectory() throws Exception
+  {
+    Path testWave = tempDir.resolve("caos_e-test.wav");
+    Files.copy(createPath("/caos_e-anfang.wav"), testWave);
+    konfig.setSource("caos_e-test.wav");
+    konfig.setDirectory(tempDir);
+    KcTapeTool kcTapeTool = new KcTapeTool(konfig);
+
+    kcTapeTool.execute();
+
+    Path outputFilePath = tempDir.resolve("caos_e-test.wav");
+    assertThat(Files.exists(outputFilePath), is(true));
+    byte[] originalCaosE = Files.readAllBytes(createPath("/CAOS_E.KCC"));
+    byte[] tempFile = Files.readAllBytes(tempDir.resolve("CAOS_E.KCC"));
+    assertThat(tempFile.length, is(originalCaosE.length));
+    assertThat(tempFile, is(originalCaosE));
   }
 
   /**
@@ -85,7 +104,7 @@ class KcTapeToolTest
     KcDatei kcDatei = new AudioReader().load(createPath("/CAOS_E.KCC"));
     AudioReader audioReaderMock = mock(AudioReader.class);
     when(audioReaderMock.getEingabeMixerName("Input")).thenReturn("InputMixer");
-    when(audioReaderMock.leseMixerDaten("InputMixer")).thenReturn(kcDatei);
+    when(audioReaderMock.leseMixerDaten(eq("InputMixer"), anyInt())).thenReturn(kcDatei);
     kcTapeTool.setAudioReader(audioReaderMock);
 
     kcTapeTool.execute();
@@ -145,7 +164,8 @@ class KcTapeToolTest
     Mixer mixerMock = mock(Mixer.class);
     SourceDataLine sdlMock = mock(SourceDataLine.class);
     // Mocks vorbereiten
-    when(audioWriterMock.getAusgabeMixer(startsWith("Kopfhörer"))).thenReturn(mixerMock);
+    when(audioWriterMock.getAusgabeMixerName(startsWith("Kopfhörer"))).thenReturn("Kopfhörer Mixer");
+    when(audioWriterMock.getAusgabeMixer("Kopfhörer Mixer")).thenReturn(mixerMock);
     when(mixerMock.getLine(ArgumentMatchers.any(DataLine.Info.class))).thenReturn(sdlMock);
     kcTapeTool.setAudioWriter(audioWriterMock);
 

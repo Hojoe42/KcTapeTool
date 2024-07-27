@@ -19,10 +19,11 @@ public class KcTapeToolMain
 //    args = new String[] { "-V" };
 //    args = new String[] { "--version" };
 //    args = new String[] { "-s", "Eingang" };
-//    args = new String[] { "-s", "test.wav" };
+//    args = new String[] { "-s", "test1.wav", "--directory", "d:/tmp/kc" };
 //    args = new String[] { "-l" };
 //    args = new String[] { "--list" };
-//    args = new String[] { "-s", "Eingang", "--wait", "60", "-d", "-o", "kcc" };
+//    args = new String[] { "-s", "Eingang", "--wait", "30", "-d", "d:/tmp/kc/out.bla"};
+    args = new String[] { "-s", "d:/tmp/kc/CAOS_E.KCC"};
       int rc = new CommandLine(new KcTapeToolCommand()).execute(args);
       System.exit(rc);
   }

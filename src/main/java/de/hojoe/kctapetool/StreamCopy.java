@@ -18,9 +18,10 @@ public class StreamCopy
   private List<AudioInputStream> audioStreams = new ArrayList<>();
 
   /**
-   *
+   * Erzeugt die entsprechende Anzahl an {@link AudioInputStream}s und kopiert alle Daten aus dem übergebenen AudioInputStream in die Ziel Stream.
    * @param inputStream der Quell Stream.
    */
+  @SuppressWarnings("resource")
   public StreamCopy(AudioInputStream inputStream, int anzahl)
   {
     this.inputStream = Objects.requireNonNull(inputStream);
@@ -53,8 +54,6 @@ public class StreamCopy
   /**
    * Kopiert alle Daten aus dem InputStream in die Ziel Streams. Das Runnable läuft bis der Input
    * Stream -1 oder eine Exception liefert.
-   *
-   * @author Holger Jödicke
    */
   private final class StreamCopyRunnable implements Runnable
   {
@@ -85,6 +84,8 @@ public class StreamCopy
     }
   }
 
+  /** Test Main Methode */
+  @SuppressWarnings("resource")
   public static void main(String[] args) throws Exception
   {
     Path path = Paths.get("d:/tmp/kc/Test1.wav");

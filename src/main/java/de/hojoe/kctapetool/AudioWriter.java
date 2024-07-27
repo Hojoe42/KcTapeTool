@@ -2,9 +2,11 @@ package de.hojoe.kctapetool;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.*;
 
 import javax.sound.sampled.*;
 import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.Line.Info;
 
 
 /**
@@ -14,6 +16,8 @@ import javax.sound.sampled.AudioFileFormat.Type;
  */
 public class AudioWriter
 {
+  /** {@link Info} Objekt für Abspiel Geräte. */
+  private static final Line.Info outputLineInfo = new Line.Info(SourceDataLine.class);
 
   /**
    * Kopiert alle Daten aus dem {@link KcAudioInputStream} in die {@link SourceDataLine}.
@@ -46,7 +50,7 @@ public class AudioWriter
     Mixer mixer;
     if(ausgabeMixerName == null)
     {
-      mixer = AudioGeraete.getDefaultAusgabeMixer();
+      mixer = getDefaultAusgabeMixer();
       if(mixer == null)
       {
         throw new RuntimeException("Konnte keinen default Ausgabemixer öffnen.");
@@ -54,7 +58,7 @@ public class AudioWriter
     }
     else
     {
-      mixer = AudioGeraete.getMixer(ausgabeMixerName);
+      mixer = getMixer(ausgabeMixerName);
       if(mixer == null)
       {
         throw new RuntimeException(String.format("Konnte Ausgabemixer [%s] nicht öffnen.", ausgabeMixerName));
@@ -63,6 +67,54 @@ public class AudioWriter
     return mixer;
   }
 
+  /**
+   * Liefert den vollständigen Mixername oder <code>null</code> wenn es keinen passenden Mixer gibt.
+   *
+   * @return den Mixername oder <code>null</code>, falls der Mixer nicht existiert
+   */
+  public String getAusgabeMixerName(String ausgabeMixerName)
+  {
+    Mixer mixer = getMixer(ausgabeMixerName);
+    if(mixer != null)
+    {
+      return mixer.getMixerInfo().getName();
+    }
+    return null;
+  }
+
+  private Mixer getMixer(String ausgabeMixerName)
+  {
+    for( Mixer mixer : getAlleAusgabeMixer() )
+    {
+      if(mixer.getMixerInfo().getName().startsWith(ausgabeMixerName))
+      {
+        return mixer;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Liefert die Mixer aller Sound Ausgabe Geräte / Mixer.
+   */
+  public List<Mixer> getAlleAusgabeMixer()
+  {
+    ArrayList<Mixer> alleOutputMixer = new ArrayList<>();
+    for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
+    {
+      @SuppressWarnings("resource")
+      Mixer mixer = AudioSystem.getMixer(mixerInfo);
+      if( mixer.isLineSupported(outputLineInfo) )
+      {
+        alleOutputMixer.add(mixer);
+      }
+    }
+    return alleOutputMixer;
+  }
+
+  /**
+   * Schreibt die übergebene {@link KcDatei} in eine WAV Datei.
+   */
   public void schreibeAudioDatei(Path path, KcDatei kcDatei)
   {
     try( KcAudioInputStream kcAudioInputStream = new KcAudioInputStream(kcDatei);
@@ -74,6 +126,29 @@ public class AudioWriter
     {
       throw new UncheckedIOException(e);
     }
+  }
+
+  /**
+   * Liefert den default Mixer für die Soundausgabe oder falls es keinen Default gibt den ersten Mixer der etwas ausgeben kann.
+   *
+   * @return einen Mixer für die Soundausgabe oder <code>null</code>, falls keiner gefunden wurde.
+   */
+  public Mixer getDefaultAusgabeMixer()
+  {
+    Mixer defaultMixer = AudioSystem.getMixer(null);
+    if( defaultMixer != null && defaultMixer.isLineSupported(outputLineInfo) )
+    {
+      return defaultMixer;
+    }
+    for( Mixer.Info mixerInfo : AudioSystem.getMixerInfo() )
+    {
+      Mixer mixer = AudioSystem.getMixer(mixerInfo);
+      if( mixer.isLineSupported(outputLineInfo) )
+      {
+        return mixer;
+      }
+    }
+    return null;
   }
 
 }

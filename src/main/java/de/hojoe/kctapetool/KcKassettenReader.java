@@ -6,6 +6,7 @@ public class KcKassettenReader
 {
 
   private WaveAnalyzer kcTape;
+  private boolean blockAnfangGefunden = false;
 
   public KcKassettenReader(WaveAnalyzer kcTape)
   {
@@ -19,7 +20,7 @@ public class KcKassettenReader
     {
       try
       {
-        if( !sucheBlockAnfang(kcTape) )
+        if( !sucheBlockAnfang() )
         {
           System.out.println("Kein Block / Programmanfang gefunden");
           return null;
@@ -47,8 +48,8 @@ public class KcKassettenReader
         else
         {
           System.out.print("? ");
-          System.out.println("\nChecksumme gelesen: " + Integer.toHexString(block.getChecksumme()) + " berechnet: " +
-            Integer.toHexString((KcDateiBlock.berechneChecksumme(block.getDaten()))));
+          System.out.println("\nChecksumme gelesen: " + Integer.toHexString(block.getChecksumme()) +
+                                         " berechnet: " + Integer.toHexString((KcDateiBlock.berechneChecksumme(block.getDaten()))));
         }
         if( blocknummer == 255 )
         {
@@ -64,15 +65,13 @@ public class KcKassettenReader
     return kcDatei;
   }
 
-  private boolean sucheBlockAnfang(WaveAnalyzer kcTape) throws IOException
+  private boolean sucheBlockAnfang() throws IOException
   {
-    int anzahlEinsSchwingungen;
     while( true )
     {
-      anzahlEinsSchwingungen = 0;
+      int anzahlEinsSchwingungen = 0;
       if( !kcTape.sucheEinsSchwingung() )
       {
-        System.out.printf("Dateiende erreicht");
         return false;
       }
       long frame = kcTape.getFramePos();
@@ -84,8 +83,9 @@ public class KcKassettenReader
           break;
         }
       }
-      if( anzahlEinsSchwingungen > 10 )
+      if( anzahlEinsSchwingungen > 20 )
       {
+        blockAnfangGefunden = true;
         frame = kcTape.getFramePos();
         // könnte ein Blockanfang sein?, dann muss ein Trennzeichen folgen
         if( kcTape.sucheTrennzeichenNachVorton() )
@@ -93,10 +93,17 @@ public class KcKassettenReader
 //          System.out.printf("Blockanfang gefunden: bei Sekunde %d und %d Frames%n", frame / 44100, frame % 44100);
           return true;
         }
-        System.out.printf("SYNC verloren bei Sekunde %d und %d Frames, Anzahl EINS Schwingungen: %d%n", frame / 44100,
-          frame % 44100, anzahlEinsSchwingungen);
+        System.out.printf("SYNC verloren bei Sekunde %d und %d Frames, Anzahl EINS Schwingungen: %d%n", frame / 44100, frame % 44100, anzahlEinsSchwingungen);
       }
     }
+  }
+
+  /**
+   * Liefert <code>true</code> wenn ein
+   */
+  public boolean isAnfangGefunden()
+  {
+    return blockAnfangGefunden;
   }
 
 }

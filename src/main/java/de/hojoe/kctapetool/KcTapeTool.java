@@ -3,6 +3,7 @@ package de.hojoe.kctapetool;
 import java.io.*;
 import java.nio.file.*;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 import javax.sound.sampled.*;
 
@@ -71,9 +72,16 @@ public class KcTapeTool
     }
     inputModus = getInputModus(getInputFile(), audioReader.getEingabeMixerName(konfig.getSource()));
     outputModus = getOutputModus();
-
-    KcDatei kcDatei = leseInput();
-    schreibeOutput(kcDatei);
+    try
+    {
+      KcDatei kcDatei;
+      kcDatei = leseInput();
+      schreibeOutput(kcDatei);
+    }
+    catch( TimeoutException e )
+    {
+      out.format("Wartezeit von %d Sekunden ist abgelaufen, beende Programm ...%n", konfig.getTimeout());
+    }
     return CommandLine.ExitCode.OK;
   }
 
@@ -116,7 +124,7 @@ public class KcTapeTool
     return true;
   }
 
-  private KcDatei leseInput()
+  private KcDatei leseInput() throws TimeoutException
   {
     switch( inputModus )
     {
@@ -130,7 +138,7 @@ public class KcTapeTool
       }
       case AUDIO_MIXER :
       {
-        return audioReader.leseMixerDaten(audioReader.getEingabeMixerName(konfig.getSource()));
+        return audioReader.leseMixerDaten(audioReader.getEingabeMixerName(konfig.getSource()), konfig.getTimeout());
       }
       default :
         throw new IllegalArgumentException("Unexpected value: " + inputModus);
@@ -149,7 +157,6 @@ public class KcTapeTool
       case AUDIO_FILE :
       {
         Path destination = getDestinationFile();
-        destination = konfig.appendToDirectory(destination);
         audioWriter.schreibeAudioDatei(destination, kcDatei);
         break;
       }
@@ -179,7 +186,7 @@ public class KcTapeTool
       }
       catch( LineUnavailableException e )
       {
-        throw new IOException("Fehler beim öffnen der Ausgabe", e);
+        throw new IOException("Fehler beim Öffnen der Ausgabe", e);
       }
     }
     catch( IOException e )
@@ -192,8 +199,8 @@ public class KcTapeTool
   {
     out.println("Verfügbare Sound Eingabe Geräte (* default):");
     @SuppressWarnings("resource")
-    Mixer defaultMixer = AudioGeraete.getDefaultInputMixer();
-    for( Mixer mixer : AudioGeraete.getAlleInputGeraeteNamen() )
+    Mixer defaultMixer = audioReader.getDefaultInputMixer();
+    for( Mixer mixer : audioReader.getAlleEingabeMixer() )
     {
       String prefix = Objects.equals(defaultMixer, mixer) ? "  (*) " : "      ";
       out.println(prefix + mixer.getMixerInfo().getName());
@@ -204,8 +211,8 @@ public class KcTapeTool
   {
     out.println("Verfügbare Sound Ausgabe Geräte (* default):");
     @SuppressWarnings("resource")
-    Mixer defaultMixer = AudioGeraete.getDefaultAusgabeMixer();
-    for( Mixer mixer : AudioGeraete.getAlleAusgabeGeraeteNamen() )
+    Mixer defaultMixer = audioWriter.getDefaultAusgabeMixer();
+    for( Mixer mixer : audioWriter.getAlleAusgabeMixer() )
     {
       String prefix = Objects.equals(defaultMixer, mixer) ? "  (*) " : "      ";
       out.println(prefix + mixer.getMixerInfo().getName());
@@ -274,15 +281,9 @@ public class KcTapeTool
       {
         return Modus.AUDIO_FILE;
       }
-      else
-      {
-        return Modus.DATA_FILE;
-      }
+      return Modus.DATA_FILE;
     }
-    else
-    {
-      return Modus.AUDIO_MIXER;
-    }
+    return Modus.AUDIO_MIXER;
   }
 
   private Modus getOutputModus()
@@ -323,7 +324,8 @@ public class KcTapeTool
     }
     try
     {
-      return Paths.get(konfig.getSource());
+      Path source = Paths.get(konfig.getSource());
+      return konfig.appendToDirectory(source);
     }
     catch( InvalidPathException e )
     {
@@ -339,7 +341,8 @@ public class KcTapeTool
     }
     try
     {
-      return Paths.get(konfig.getDestination());
+      Path destination = Paths.get(konfig.getDestination());
+      return konfig.appendToDirectory(destination);
     }
     catch( InvalidPathException e )
     {
@@ -349,19 +352,12 @@ public class KcTapeTool
 
   private String getAusgabeMixerName()
   {
-    if( konfig.getDestination() == null )
+    String destination = konfig.getDestination();
+    if( destination == null )
     {
       return null;
     }
-    for( Mixer mixer : AudioGeraete.getAlleAusgabeGeraeteNamen() )
-    {
-      String name = mixer.getMixerInfo().getName();
-      if( name.startsWith(konfig.getDestination()) )
-      {
-        return name;
-      }
-    }
-    return null;
+    return audioWriter.getAusgabeMixerName(destination);
   }
 
   @Override

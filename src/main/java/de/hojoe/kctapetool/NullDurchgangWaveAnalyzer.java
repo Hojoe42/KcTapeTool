@@ -2,8 +2,11 @@ package de.hojoe.kctapetool;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.sound.sampled.AudioInputStream;
+
+import org.apache.commons.io.IOUtils;
 
 import de.hojoe.kctapetool.SchwingungKonfig.BitKonfig;
 
@@ -15,7 +18,7 @@ import de.hojoe.kctapetool.SchwingungKonfig.BitKonfig;
 public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
 {
   private IntegerStream is;
-  private long framePos = 0;
+  private AtomicLong framePos = new AtomicLong(0);
   private ArrayDeque<Integer> puffer = new ArrayDeque<>(100);
   private SchwingungKonfig bitKonfig = new SchwingungKonfig();
 
@@ -33,7 +36,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
     }
     while( pruefeSchwingungImPuffer(puffer.iterator(), bitKonfig.getEinsBit(), true, false) == null )
     {
-      framePos++;
+      framePos.incrementAndGet();
       puffer.pollFirst();
       if( !fillPuffer(bitKonfig.getEinsBit().getMaxLaenge()) )
       {
@@ -55,7 +58,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
     {
       return false;
     }
-    framePos += einsSchwingung.laenge;
+    framePos.addAndGet(einsSchwingung.laenge);
     for( int i = 0; i < einsSchwingung.laenge; i++ )
     {
       puffer.removeFirst();
@@ -81,7 +84,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
       {
         return true;
       }
-      framePos++;
+      framePos.incrementAndGet();
       puffer.pollFirst();
     }
     return false;
@@ -95,7 +98,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
     {
       return false;
     }
-    framePos += schwingung.laenge;
+    framePos.addAndGet(schwingung.laenge);
     for( int i = 0; i < schwingung.laenge; i++ )
     {
       puffer.removeFirst();
@@ -147,8 +150,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
     }
     if( naechstesTrennzeichen == null )
     {
-      String pos = String.format("Sekunde %d und Frame %d ", framePos / 44100, framePos % 44100);
-      throw new WaveAnalyzerException("Kein Trennzeichen erkannt, Position: " + pos);
+      throw new WaveAnalyzerException("Kein Trennzeichen erkannt, " + formatierePosition());
     }
     // puffer auf Stand bringen
     for( int i = 0; i < index + naechstesTrennzeichen.laenge; i++ )
@@ -159,7 +161,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
     list = list.subList(0, index + 2);
     int data = extrahiereBits(list);
     // framePos zeigt hinter das nächste Trennzeichen
-    framePos += index + naechstesTrennzeichen.laenge;
+    framePos.addAndGet(index + naechstesTrennzeichen.laenge);
     return data;
   }
 
@@ -182,7 +184,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
         listIndex += einsSchwingung.laenge;
         continue;
       }
-      String pos = String.format("Sekunde %d und Frame %d ", framePos / 44100, framePos % 44100);
+      String pos = formatierePosition();
       throw new RuntimeException("mehr Intelligenz benötigt, Position: " + pos + ", Bit: " + i);
     }
     return b;
@@ -190,8 +192,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
 
   /**
    * @param bit nach welchem Bit gesucht wird
-   * @param nullDurchgang1 soll der nullDurchgang1 gesucht werden oder ist der Puffer bereits an am
-   *          Anfang einer Schwingung.
+   * @param nullDurchgang1 soll der nullDurchgang1 gesucht werden oder ist der Puffer bereits am Anfang einer Schwingung.
    * @param letztes das letzte Trennzeichen eine Blocks
    */
   private KcTapeSchwingung pruefeSchwingungImPuffer(Iterator<Integer> iter, BitKonfig bit, boolean nullDurchgang1, boolean letztes)
@@ -235,14 +236,14 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
     int null2Max = (int)Math.round(bit.getLaenge() / 2.0 * 1.3);
     if( nullDurchgang2 > null2Min && nullDurchgang2 < null2Max && nullDurchgang3 != -1 && nullDurchgang3 >= bit.getMinLaenge() )
     {
-      return new KcTapeSchwingung(index, 1, -1);
+      return new KcTapeSchwingung(index);
     }
 
     // Das letzte Trennzeichen ist manchmal deutlich länger und verwaschen, dann ist nur der Anfang
     // relevant
     if( letztes && nullDurchgang2 > null2Min && nullDurchgang2 < null2Max )
     {
-      return new KcTapeSchwingung(index, 1, -1);
+      return new KcTapeSchwingung(index);
     }
     return null;
   }
@@ -250,7 +251,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
   @Override
   public long getFramePos()
   {
-    return framePos;
+    return framePos.get();
   }
 
   /**
@@ -278,38 +279,28 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
   @Override
   public void close() throws IOException
   {
-    if( is == null )
-    {
-      return;
-    }
-    try
-    {
-      is.close();
-    }
-    finally
-    {
-      is = null;
-    }
+    IOUtils.closeQuietly(is);
+  }
+
+  private String formatierePosition()
+  {
+    long fp = framePos.get();
+    return String.format("Position: Sekunde %d und Frame %d", fp / 44100, fp % 44100);
   }
 
   @Override
   public String toString()
   {
-    return "framePos=" + framePos + " Frames " + (framePos / 44100) + " Sekunden und " + (framePos % 44100) + " Frames, Puffer:\n" + puffer;
+    return formatierePosition() + ", Puffer:\n" + puffer;
   }
 
   private static class KcTapeSchwingung
   {
-
     private int laenge;
-    private int max;
-    private int min;
 
-    public KcTapeSchwingung(int laenge, int max, int min)
+    public KcTapeSchwingung(int laenge)
     {
       this.laenge = laenge;
-      this.max = max;
-      this.min = min;
     }
 
   }

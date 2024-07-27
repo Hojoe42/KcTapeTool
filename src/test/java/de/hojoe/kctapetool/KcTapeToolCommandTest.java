@@ -67,7 +67,6 @@ class KcTapeToolCommandTest
   }
 
   @Test
-  @Disabled
   void testDirectoryParameter()
   {
     KcTapeToolCommand command = new TestKcTapeCommand();
