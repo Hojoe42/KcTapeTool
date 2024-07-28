@@ -5,7 +5,7 @@ Laden und Speichern von KC85/X Programmen auf und vom PC
 
 ## Bauen
 
-Es sollte ein aktuelles JDK (>=17) im Pfad liegen oder die JAVA_HOME Umgebungsvariable sollte auf ein aktuelles JDK zeigen.
+Es sollte ein aktuelles JDK (>=17) im Pfad liegen oder die `JAVA_HOME` Umgebungsvariable sollte auf ein aktuelles JDK zeigen.
 
 Im Hauptverzeichnis von KcTapeTools einmal 
 
@@ -18,7 +18,11 @@ beliebiger Stelle entpackt werde. Das KCTapeTool wird mit einem der Skripte im `
 
 ## Starten
 
-Nach dem Entpacken kann das Programm je nach Betriebssystem mit einem der Skripte im `bin/` Ordner gestartet werden. Hier einige Möglichkeiten:
+Nach dem Bauen oder dem herunterladen von [Releases](https://github.com/Hojoe42/KcTapeTool/releases) muss das jeweilige Archiv entpackt werden. 
+Danach kann das Programm je nach Betriebssystem mit einem der Skripte im `bin/` Ordner gestartet werden. Auch hier gilt Java muss im Pfad liegen 
+oder die Umgebungsvariable `JAVA_HOME` muss passend gesetzt sein.
+
+Hier einige Möglichkeiten:
 
 - `KcTapeTool.bat --help` zeigt die Hilfe:
 
