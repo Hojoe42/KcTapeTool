@@ -1,13 +1,14 @@
 # KcTapeTool
-Laden und Speichern von KC85/X Programmen auf und vom PC
+Laden und Speichern von KC 85/X Programmen auf und vom PC
 
 ## Installation
 
 ### Java Installation
 
-Wenn noch kein Java intalliert ist, dann muss es zuerst herunter geladen und installiert werden. Aktuell (2024) empfiehlt es sich Java 21 zu nehmen, da es längeren Support hat. Hier zwei Anlaufstellen:
+Wenn noch kein Java installiert ist, dann muss es zuerst herunter geladen und installiert werden. Aktuell (2024) empfiehlt es sich Java 21 zu nehmen, 
+da es längeren Support hat. Hier zwei Anlaufstellen:
 * [Oracle Java](https://www.oracle.com/de/java/technologies/downloads/) Der Download vom Besitzer der Namensrechte.
-* [Adoptium Java](https://adoptium.net/de/) Ein alternatives Java, falls einem die Lizenbedingungen von Oracle nicht gefallen.
+* [Adoptium Java](https://adoptium.net/de/) Ein alternatives Java, falls einem die Lizenzbedingungen von Oracle nicht gefallen.
 
 ## KcTapeTool Installation
 Aktuelle Releases von KcTapeTool befinden sich unter [Releases](https://github.com/Hojoe42/KcTapeTool/releases). 
