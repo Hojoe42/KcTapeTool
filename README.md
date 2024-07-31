@@ -82,3 +82,22 @@ Im Hauptverzeichnis von KcTapeTools einmal
 
 ausführen. Damit wird das Projekt compiliert und unter build/distributions ein Tar und ein Zip mit dem kompilierten Programm abgelegt. Das kann an 
 beliebiger Stelle entpackt werde. Das KCTapeTool wird mit einem der Skripte im `bin/` Ordner gestartet. 
+
+## Wie funktioniert die Audioanalyse
+
+Die Datenaufzeichnung auf Kassetten geschieht beim KC 85/x durch verschiedene Töne. Im [Systemhandbuch](http://www.kc85.info/index.php/download-topmenu/download/32-handbuecher/401-kc85-5-systemhandbuch.html)
+im Kapitel Magnetbandaufzeichnung sind die genauen Details beschreiben. 
+Wichtig bei den Tönen ist nur die Frequenz, nicht aber die Amplitude. Das folgende Bild zeigt ein Beispiel mit den Schwingungen an einem Programmanfang.
+
+![KC Magnetbandaufzeichnung, mit Erklärungen wie die Töne in einzelne Bits und Bytes zerlegt werden](/images/kc-audio-format.png)
+
+Das Beispiel wurde mit maximaler Lautstärke von einem Kassettenrecorder wieder gegeben. Dadurch ergibt sich eine Übersteuerung und die Wellen sind 
+oben und unten gekappt. Das spielt aber keine Rolle. Durch das Strecken der Wellen ergeben sich sehr gut sichtbare Durchgänge durch die Nullachse, 
+die Nulldurchgänge. Das Programm misst die Dauer zwischen den Nulldurchgängen und ermittelt daraus die jeweilige Frequenz der Schwingung. 
+Aus der Frequenz ergibt sich direkt der jeweilige Bitwert. Diese können dann zu Bytes zusammengefasst werden.
+
+Hier ein Beispiel, welches mit mittlerer Lautstärke aufgezeichnet wurde. Die Übersteuerung ist deutlich geringer, dafür sind aber die Nulldurchgänge 
+deutlich schwieriger zu erkennen. So eine Aufzeichnung kann vom KcTapeTool meist nicht mehr fehlerfrei eingelesen werden.
+
+![KC Magnetbandaufzeichnung mittlere Lautstärke](/images/kc-audio-mittel.png)
+

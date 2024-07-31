@@ -15,3 +15,4 @@
 *.kcc      binary
 *.wav      binary
 *.jar      binary
+*.png      binary
