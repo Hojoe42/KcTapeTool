@@ -68,14 +68,26 @@ public class SchwingungKonfig
     @Override
     public int getMaxLaenge()
     {
-      return (int)Math.round(getLaenge() * 1.2);
+      return (int)Math.round(getLaenge() * 1.1);
     }
 
     @Override
     public int getMinLaenge()
     {
-      return (int)Math.round(getLaenge() * 0.8);
+      return (int)Math.round(getLaenge() * 0.9);
     }
+
+    @Override
+    public String toString()
+    {
+      return "BitKonfigImpl [frequenz=" + frequenz +
+        ", getLaenge()=" + getLaenge() +
+        ", getMaxLaenge()=" + getMaxLaenge() +
+        ", getMinLaenge()=" + getMinLaenge() +
+        "]";
+    }
+
+
 
   }
 

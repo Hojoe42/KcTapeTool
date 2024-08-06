@@ -209,7 +209,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
     int nullDurchgang2 = -1;
     int nullDurchgang3 = -1;
     // Karenz bis wieder mit der Suche nach einem Durchgang begonnen wird
-    int minIndexDurchgang = 5; // ca. 1/4 von 22
+    int minIndexDurchgang = 5; // ca. 1/4 von 22 (kürzeste Schwingung)
     while( iter.hasNext() )
     {
       int aktuell = iter.next();
@@ -232,16 +232,16 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
         break;
       }
     }
-    int null2Min = (int)Math.round(bit.getLaenge() / 2.0 * 0.7);
-    int null2Max = (int)Math.round(bit.getLaenge() / 2.0 * 1.3);
-    if( nullDurchgang2 > null2Min && nullDurchgang2 < null2Max && nullDurchgang3 != -1 && nullDurchgang3 >= bit.getMinLaenge() )
+//    int null2Min = (int)Math.round(bit.getLaenge() / 2.0 * 0.7);
+//    int null2Max = (int)Math.round(bit.getLaenge() / 2.0 * 1.3);
+    if( nullDurchgang2 != -1 && nullDurchgang3 != -1 && nullDurchgang3 >= bit.getMinLaenge() )
     {
       return new KcTapeSchwingung(index);
     }
 
     // Das letzte Trennzeichen ist manchmal deutlich länger und verwaschen, dann ist nur der Anfang
     // relevant
-    if( letztes && nullDurchgang2 > null2Min && nullDurchgang2 < null2Max )
+    if( letztes && nullDurchgang2 != -1 && nullDurchgang3 >= bit.getMinLaenge())
     {
       return new KcTapeSchwingung(index);
     }
