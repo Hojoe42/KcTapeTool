@@ -2,7 +2,7 @@ package de.hojoe.kctapetool;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 import javax.sound.sampled.*;
@@ -34,6 +34,7 @@ public class KcTapeTool
   private Modus outputModus;
   private AudioWriter audioWriter = new AudioWriter();
   private AudioReader audioReader = new AudioReader();
+  private DateiReader dateiReader = new DateiReader();
 
   /**
    * Erzeugt ein neues KC Tabep Tool für die übergebene Konfiguration.
@@ -74,7 +75,7 @@ public class KcTapeTool
     outputModus = getOutputModus();
     try
     {
-      KcDatei kcDatei;
+      List<KcDatei> kcDatei;
       kcDatei = leseInput();
       schreibeOutput(kcDatei);
     }
@@ -84,6 +85,8 @@ public class KcTapeTool
     }
     return CommandLine.ExitCode.OK;
   }
+
+  // einigen Setter Methoden zum einfacheren Testen
 
   void setOut(PrintStream out)
   {
@@ -100,6 +103,11 @@ public class KcTapeTool
     this.audioReader = audioReader;
   }
 
+  void setDateiReader(DateiReader dateiReader)
+  {
+    this.dateiReader = dateiReader;
+  }
+
   /**
    * Liefert <code>true</code> wenn alles OK ist, ansonsten <code>false</code>.
    */
@@ -113,18 +121,18 @@ public class KcTapeTool
     }
     if( getInputFile() == null && audioReader.getEingabeMixerName(konfig.getSource()) == null )
     {
-      out.printf("Die angegebene Quelle [%s] ist weder eine Datei noch ein Soundeingang%n", konfig.getSource());
+      out.format("Die angegebene Quelle [%s] ist weder eine lesbare Datei noch ein Soundeingang%n", konfig.getSource());
       return false;
     }
     if( konfig.getDestination() != null && getDestinationFile() == null && getAusgabeMixerName() == null )
     {
-      out.printf("Das angegebene Ziel [%s] ist weder eine Datei noch ein Soundausgang%n", konfig.getDestination());
+      out.format("Das angegebene Ziel [%s] ist weder eine Datei noch ein Soundausgang%n", konfig.getDestination());
       return false;
     }
     return true;
   }
 
-  private KcDatei leseInput() throws TimeoutException
+  private List<KcDatei> leseInput() throws TimeoutException
   {
     switch( inputModus )
     {
@@ -138,14 +146,15 @@ public class KcTapeTool
       }
       case AUDIO_MIXER :
       {
-        return audioReader.leseMixerDaten(audioReader.getEingabeMixerName(konfig.getSource()), konfig.getTimeout());
+        KcDatei kdDatei = audioReader.leseMixerDaten(audioReader.getEingabeMixerName(konfig.getSource()), konfig.getTimeout());
+        return Collections.singletonList(kdDatei);
       }
       default :
         throw new IllegalArgumentException("Unexpected value: " + inputModus);
     }
   }
 
-  private void schreibeOutput(KcDatei kcDatei)
+  private void schreibeOutput(List<KcDatei> kcDatei)
   {
     switch( outputModus )
     {
@@ -156,8 +165,7 @@ public class KcTapeTool
       }
       case AUDIO_FILE :
       {
-        Path destination = getDestinationFile();
-        audioWriter.schreibeAudioDatei(destination, kcDatei);
+        schreibeAudioDatei(kcDatei);
         break;
       }
       case AUDIO_MIXER :
@@ -170,7 +178,8 @@ public class KcTapeTool
     }
   }
 
-  private void schreibeAudioMixer(KcDatei kcDatei)
+  @SuppressWarnings("resource")
+  private void schreibeAudioMixer(List<KcDatei> kcDatei)
   {
     Mixer mixer = audioWriter.getAusgabeMixer(getAusgabeMixerName());
     try( KcAudioInputStream kcAudioInputStream = new KcAudioInputStream(kcDatei) )
@@ -219,26 +228,62 @@ public class KcTapeTool
     }
   }
 
-  private KcDatei leseDatenDatei(Path inputFile)
+  private List<KcDatei> leseDatenDatei(Path inputFile)
   {
-    return audioReader.load(inputFile);
+    List<KcDatei> kcDatei = dateiReader.load(inputFile);
+    out.format("Datei eingelesen: %s%n", inputFile.toAbsolutePath());
+    return kcDatei;
   }
 
-  private void schreibeDatenDatei(KcDatei kcDatei)
+  private void schreibeAudioDatei(List<KcDatei> kcDatei)
   {
-    try
+    Path destination = getDestinationFile();
+    audioWriter.schreibeAudioDatei(destination, kcDatei);
+    out.format("Datei geschrieben: %s%n", destination);
+  }
+
+  private void schreibeDatenDatei(List<KcDatei> kcDateien)
+  {
+    int index = 1;
+    for( KcDatei kcDatei : kcDateien )
     {
-      Path path = Paths.get(kcDatei.getFullDateiName());
-      if(konfig.getDirectory() != null)
+      try
       {
-        path = konfig.getDirectory().resolve(path);
+        Path path = getDestinationFile();
+        if(path == null)
+        {
+          path = Paths.get(kcDatei.getFullDateiName());
+        }
+        else
+        {
+          if(kcDateien.size() > 1)
+          {
+            path = addCount(path, index++);
+          }
+        }
+        if(konfig.getDirectory() != null && !path.isAbsolute())
+        {
+          path = konfig.getDirectory().resolve(path);
+        }
+        schreibeDatei(path, kcDatei);
+        out.format("Datei geschrieben: %s%n", path);
       }
-      schreibeDatei(path, kcDatei);
+      catch( IOException e )
+      {
+        throw new UncheckedIOException("Fehler beim Scheiben der Daten nach [" + konfig.getDestination() + "].", e);
+      }
     }
-    catch( IOException e )
-    {
-      throw new UncheckedIOException("Fehler beim Scheiben der Daten nach [" + konfig.getDestination() + "].", e);
-    }
+  }
+
+  /**
+   * Fügt einen Index / Zähler in den Dateinamen vor der Endung ein.
+   */
+  private Path addCount(Path path, int index)
+  {
+    String fileName = path.getFileName().toString();
+    String baseName = FilenameUtils.getBaseName(fileName);
+    String extension = FilenameUtils.getExtension(fileName);
+    return path.getParent().resolve(baseName + "-" + index + "." + extension);
   }
 
   private void schreibeDatei(Path path, KcDatei kcDatei) throws IOException
@@ -258,7 +303,7 @@ public class KcTapeTool
   /**
    * @param file kann <code>null</code> sein
    */
-  private boolean isWaveFile(Path file)
+  private boolean isWaveFileExtension(Path file)
   {
     if( file == null )
     {
@@ -266,11 +311,27 @@ public class KcTapeTool
     }
     String fileName = file.getFileName().toString();
     String fileExtension = FilenameUtils.getExtension(fileName);
-    if( fileExtension == null )
+    return "wav".equalsIgnoreCase(fileExtension);
+  }
+
+  /**
+   * @param file kann <code>null</code> sein
+   */
+  private boolean isWaveFile(Path file)
+  {
+    if( file == null )
     {
       return false;
     }
-    return "wav".equalsIgnoreCase(fileExtension);
+    try( AudioInputStream as = audioReader.createAudioStream(file) )
+    {
+      // testweise den Stream erzeugen aber nicht lesen, um zu prüfen, dass es wirklich eine WAV Datei ist
+    }
+    catch (IOException e)
+    {
+      return false;
+    }
+    return true;
   }
 
   private Modus getInputModus(Path inputFile, String inputMixerName)
@@ -309,13 +370,18 @@ public class KcTapeTool
       return Modus.AUDIO_MIXER;
     }
     Path destinationFile = getDestinationFile();
-    if( isWaveFile(destinationFile) )
+    if( isWaveFileExtension(destinationFile) )
     {
       return Modus.AUDIO_FILE;
     }
     return Modus.DATA_FILE;
   }
 
+  /**
+   * Liefert einen {@link Path} zur einzulesenden Datei.
+   *
+   * @return den {@link Path} zur einzulesenden Datei oder <code>null</code> wenn es keine Datei gibt.
+   */
   private Path getInputFile()
   {
     if( konfig.getSource() == null )
@@ -325,7 +391,12 @@ public class KcTapeTool
     try
     {
       Path source = Paths.get(konfig.getSource());
-      return konfig.appendToDirectory(source);
+      Path inputFilePath = konfig.appendToDirectory(source);
+      if(Files.isReadable(inputFilePath))
+      {
+        return inputFilePath;
+      }
+      return null;
     }
     catch( InvalidPathException e )
     {

@@ -1,7 +1,7 @@
 package de.hojoe.kctapetool;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 
 import javax.sound.sampled.AudioFormat;
 
@@ -21,13 +21,13 @@ public class KcAudioInputStream extends InputStream
   private ArrayList<Integer> daten = new ArrayList<>();
   private int index = 0;
 
-  private KcDatei kcDatei;
-
-
-  public KcAudioInputStream(KcDatei kcDatei)
+  public KcAudioInputStream(List<KcDatei> kcDateien)
   {
-    this.kcDatei = kcDatei;
-    generate();
+    // @todo extra Thread der einen Puffer füllt, damit nicht alle Daten vorgeneriert werden müssen
+    for( KcDatei kcDatei : kcDateien )
+    {
+      generate(kcDatei);
+    }
   }
 
   @Override
@@ -40,7 +40,7 @@ public class KcAudioInputStream extends InputStream
     return daten.get(index++);
   }
 
-  private void generate()
+  private void generate(KcDatei kcDatei)
   {
     // 1 Sekunde Stille
     for( int i = 0; i < sampleRate; i++ )

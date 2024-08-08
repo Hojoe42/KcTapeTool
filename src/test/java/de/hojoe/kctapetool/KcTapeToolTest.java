@@ -101,7 +101,7 @@ class KcTapeToolTest
     konfig.setDirectory(tempDir);
     KcTapeTool kcTapeTool = new KcTapeTool(konfig);
     // Mockinitialisierung
-    KcDatei kcDatei = new AudioReader().load(createPath("/CAOS_E.KCC"));
+    KcDatei kcDatei = new DateiReader().load(createPath("/CAOS_E.KCC")).get(0);
     AudioReader audioReaderMock = mock(AudioReader.class);
     when(audioReaderMock.getEingabeMixerName("Input")).thenReturn("InputMixer");
     when(audioReaderMock.leseMixerDaten(eq("InputMixer"), anyInt())).thenReturn(kcDatei);

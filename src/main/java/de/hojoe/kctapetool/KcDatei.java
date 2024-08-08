@@ -110,13 +110,33 @@ public class KcDatei
 
   private String getCaosDateiName(byte[] daten)
   {
-    return new String(daten, 0,12, KcCaosCharsetProvider.CAOS_CHARSET);
+    String name = new String(daten, 0,12, KcCaosCharsetProvider.CAOS_CHARSET);
+    return bereinige(name);
   }
 
   private String getBasicDateiName(byte[] daten)
   {
-    return new String(daten, 3,11, KcCaosCharsetProvider.CAOS_CHARSET);
+    String name = new String(daten, 3,11, KcCaosCharsetProvider.CAOS_CHARSET);
+    return bereinige(name);
   }
+
+  private String bereinige(String name)
+  {
+    StringBuilder sb = new StringBuilder();
+    for( int i = 0; i < name.length(); i++ )
+    {
+      char ch = name.charAt(i);
+      sb.append( switch( ch )
+      {
+        case '\u0000' -> ' ';
+        case '/' -> ' ';
+        case '\\' -> ' ';
+        default ->  ch;
+      });
+    }
+    return sb.toString();
+  }
+
 
   @Override
   public String toString()

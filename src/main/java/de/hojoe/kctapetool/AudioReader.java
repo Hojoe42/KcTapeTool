@@ -25,16 +25,36 @@ public class AudioReader
    * @param inputWave Pfad und Name einer zu lesenden WAV Datei
    * @return eine {@link KcDatei} mit den binären Daten
    */
-  public KcDatei leseWavDatei(Path inputWave)
+  public List<KcDatei> leseWavDatei(Path inputWave)
   {
     try( AudioInputStream ais = createAudioStream(inputWave) )
     {
-      return leseDaten(ais);
+      return Collections.singletonList(leseDaten(ais));
     }
     catch( IOException e )
     {
       throw new RuntimeException("Fehler beim Lesen von " + inputWave.toAbsolutePath(), e);
     }
+  }
+
+  /**
+   * Prüft ob es sich bei dem übergebenem Pfad um eine echte WAV Datei handelt.
+   */
+  public boolean isWaveFile(Path path)
+  {
+    if( !Files.isReadable(path) )
+    {
+      return false;
+    }
+    try( AudioInputStream as = createAudioStream(path) )
+    {
+      // testweise den Stream erzeugen aber nicht lesen, um zu prüfen, dass es wirklich eine WAV Datei ist
+    }
+    catch( IOException e )
+    {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -122,43 +142,13 @@ public class AudioReader
     return alleInputMixer;
   }
 
-  public KcDatei load(Path path)
-  {
-    byte[] allBytes;
-    try
-    {
-      allBytes = Files.readAllBytes(path);
-    }
-    catch( IOException e )
-    {
-      throw new UncheckedIOException("Fehler beim Lesen der Daten von [" + path + "].", e);
-    }
-    int index = 0;
-    KcDatei kcDatei = new KcDatei();
-    int blockNr = 1;
-    while( index < allBytes.length )
-    {
-      byte[] blockData = new byte[KcDateiBlock.BLOCK_SIZE];
-      int sizeToCopy = Math.min(blockData.length, allBytes.length - index);
-      System.arraycopy(allBytes, index, blockData, 0, sizeToCopy);
-      index += sizeToCopy;
-      if( index >= allBytes.length )
-      {
-        // letzter Block
-        blockNr = 0xff;
-      }
-      kcDatei.add(new KcDateiBlock(blockNr, KcDateiBlock.berechneChecksumme(blockData), blockData));
-      blockNr++;
-
-    }
-    return kcDatei;
-  }
-
   private KcDatei leseDaten(AudioInputStream ais) throws IOException
   {
-    NullDurchgangWaveAnalyzer waveAnalyzer = new NullDurchgangWaveAnalyzer(ais);
-    KcKassettenReader kcKassettenReader = new KcKassettenReader(waveAnalyzer);
-    return kcKassettenReader.leseDatei();
+    try(NullDurchgangWaveAnalyzer waveAnalyzer = new NullDurchgangWaveAnalyzer(ais);)
+    {
+       KcKassettenReader kcKassettenReader = new KcKassettenReader(waveAnalyzer);
+       return kcKassettenReader.leseDatei();
+    }
   }
 
   /**
@@ -167,7 +157,8 @@ public class AudioReader
    * @param inputPath Pfad zu einer WAV Datei
    * @throws IOException bei
    */
-  private AudioInputStream createAudioStream(Path inputPath) throws IOException
+  @SuppressWarnings("resource")
+  public AudioInputStream createAudioStream(Path inputPath) throws IOException
   {
     try
     {
@@ -182,6 +173,7 @@ public class AudioReader
     }
   }
 
+  @SuppressWarnings("resource")
   private AudioInput createAudioInputStream(String inputSourceName)
   {
     Mixer mixer;
@@ -227,7 +219,7 @@ public class AudioReader
   }
 
   /**
-   * Liefert den default Mixer für die Soundeingabe oder falls es keinen Default gibt den ersten Mixer kann.
+   * Liefert den default Mixer für die Soundeingabe oder falls es keinen Default gibt den ersten Mixer.
    *
    * @return einen Mixer für die Soundeingabe oder <code>null</code>, falls keiner gefunden wurde.
    */
@@ -253,7 +245,7 @@ public class AudioReader
   /**
    * Liefert das Audioformat für Stereo CD Qualität.
    */
-  private AudioFormat createCdAudioFormat()
+  public static AudioFormat createCdAudioFormat()
   {
     float sampleRate = 44100;
     int sampleSizeInBits = 16;

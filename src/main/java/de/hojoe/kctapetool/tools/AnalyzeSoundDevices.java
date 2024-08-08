@@ -40,51 +40,68 @@ public class AnalyzeSoundDevices
         System.out.println("  " + info);
       }
 
-
       System.out.println();
       System.out.println("Mixer Infos:");
       for(Mixer.Info  mixerInfo : AudioSystem.getMixerInfo())
       {
-        Mixer mixer = AudioSystem.getMixer(mixerInfo);
-        System.out.println("  " + mixerInfo + "  " + mixer);
-        for( Line.Info targetLineInfo : mixer.getTargetLineInfo() )
+        try( Mixer mixer = AudioSystem.getMixer(mixerInfo) )
         {
-          System.out.println("    Target Line: " + targetLineInfo);
-          Line line = AudioSystem.getLine(targetLineInfo);
-          System.out.println("    Line: " + line);
-          if(line instanceof TargetDataLine)
-          {
-            TargetDataLine tdl = (TargetDataLine)line;
-            DataLine.Info lineInfo = (DataLine.Info)tdl.getLineInfo();
-            for( AudioFormat audioFormat : lineInfo.getFormats() )
-            {
-              System.out.println("      " + audioFormat);
-            }
-          }
-          else if(line instanceof Port)
-          {
-            Port port = (Port)line;
-            Port.Info lineInfo = (Port.Info)port.getLineInfo();
-            System.out.println("    " + lineInfo.getName() + ", is Source: " + lineInfo.isSource());
-          }
-          else
-          {
-            System.out.println("    !!! ???" + line);
-          }
-        }
-        for( Line.Info sourceLineInfo : mixer.getSourceLineInfo() )
-        {
-          System.out.println("    Source Line: " + sourceLineInfo);
-          Line line = AudioSystem.getLine(sourceLineInfo);
-          System.out.println("    Line: " + line);
-
-          System.out.println("    !!! ???" + line);
+          printMixerInfos(mixerInfo, mixer);
         }
       }
     }
     catch( LineUnavailableException e )
     {
       e.printStackTrace();
+    }
+  }
+
+  private static void printMixerInfos(Mixer.Info mixerInfo, Mixer mixer) throws LineUnavailableException
+  {
+    System.out.println("  " + mixerInfo + "  " + mixer);
+    for( Line.Info targetLineInfo : mixer.getTargetLineInfo() )
+    {
+      System.out.println("    Target Line: " + targetLineInfo);
+      try( Line line = AudioSystem.getLine(targetLineInfo); )
+      {
+        printLineInfos(line);
+      }
+    }
+    for( Line.Info sourceLineInfo : mixer.getSourceLineInfo() )
+    {
+      System.out.println("    Source Line: " + sourceLineInfo);
+      try( Line line = AudioSystem.getLine(sourceLineInfo) )
+      {
+        System.out.println("    Line: " + line);
+        System.out.println("    !!! ???" + line);
+      }
+    }
+  }
+
+  private static void printLineInfos(Line line)
+  {
+    System.out.println("    Line: " + line);
+    if( line instanceof TargetDataLine )
+    {
+      TargetDataLine tdl = (TargetDataLine)line;
+      DataLine.Info lineInfo = (DataLine.Info)tdl.getLineInfo();
+      for( AudioFormat audioFormat : lineInfo.getFormats() )
+      {
+        System.out.println("      " + audioFormat);
+      }
+    }
+    else
+    {
+      if( line instanceof Port )
+      {
+        Port port = (Port)line;
+        Port.Info lineInfo = (Port.Info)port.getLineInfo();
+        System.out.println("    " + lineInfo.getName() + ", is Source: " + lineInfo.isSource());
+      }
+      else
+      {
+        System.out.println("    !!! ???" + line);
+      }
     }
   }
 

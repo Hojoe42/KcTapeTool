@@ -115,7 +115,7 @@ public class AudioWriter
   /**
    * Schreibt die übergebene {@link KcDatei} in eine WAV Datei.
    */
-  public void schreibeAudioDatei(Path path, KcDatei kcDatei)
+  public void schreibeAudioDatei(Path path, List<KcDatei> kcDatei)
   {
     try( KcAudioInputStream kcAudioInputStream = new KcAudioInputStream(kcDatei);
       AudioInputStream ais = new AudioInputStream(kcAudioInputStream, kcAudioInputStream.getAudioFormat(), AudioSystem.NOT_SPECIFIED) )

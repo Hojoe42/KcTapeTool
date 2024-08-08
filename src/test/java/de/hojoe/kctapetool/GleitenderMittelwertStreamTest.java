@@ -13,8 +13,9 @@ class GleitenderMittelwertStreamTest
   @Test
   void testRead() throws IOException
   {
-    IntegerTestStream integerTestStream = new IntegerTestStream(Arrays.asList(1,2,3,4,5,6,7));
-    try(GleitenderMittelwertStream gmStream = new GleitenderMittelwertStream(integerTestStream, 5))
+
+    try( IntegerTestStream integerTestStream = new IntegerTestStream(Arrays.asList(1,2,3,4,5,6,7));
+         GleitenderMittelwertStream gmStream = new GleitenderMittelwertStream(integerTestStream, 5); )
     {
       assertEquals(3, gmStream.read());
       assertEquals(4, gmStream.read());
