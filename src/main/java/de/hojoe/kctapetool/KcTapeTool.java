@@ -24,12 +24,6 @@ public class KcTapeTool
   private KcTapeToolCommand konfig;
   private PrintStream out = System.out;
 
-  /*
-   * Lese Audio (Soundkarte oder WAV) - KcDatei - Schreibe (Soundkarte oder WAV)
-   * Lese Audio (Soundkarte oder WAV) - KcDatei - Schreibe Datendatei
-   * Lese Datendatei - KcDatei - Schreibe (Soundkarte oder WAV)
-   * Lese Datendatei - KcDatei - Schreibe Datendatei
-   */
   private Modus inputModus;
   private Modus outputModus;
   private AudioWriter audioWriter = new AudioWriter();
@@ -44,6 +38,15 @@ public class KcTapeTool
     this.konfig = Objects.requireNonNull(konfig);
   }
 
+  /**
+   * Typ der zu lesenden oder zu schreibenden Daten.
+   * <pre>
+   * Lese Audio (Soundkarte oder WAV) - KcDatei - Schreibe Audio (Soundkarte oder WAV)
+   * Lese Audio (Soundkarte oder WAV) - KcDatei - Schreibe Datendatei
+   * Lese Datendatei - KcDatei - Schreibe Audio (Soundkarte oder WAV)
+   * Lese Datendatei - KcDatei - Schreibe Datendatei
+   * </pre>
+   */
   enum Modus
   {
     /** Lesen oder schreiben von / in eine Wave Datei. */

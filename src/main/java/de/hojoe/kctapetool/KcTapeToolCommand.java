@@ -1,7 +1,11 @@
 package de.hojoe.kctapetool;
 
+import java.io.*;
+import java.net.URL;
 import java.nio.file.Path;
+import java.util.Enumeration;
 import java.util.concurrent.Callable;
+import java.util.jar.*;
 
 import picocli.CommandLine.*;
 
@@ -10,7 +14,7 @@ import picocli.CommandLine.*;
  *
  * @author Holger Jödicke
  */
-@Command(name = "KcTapeTool", version = "0.1.0")
+@Command(name = "KcTapeTool", versionProvider = KcTapeToolCommand.ManifestVersionProvider.class)
 public class KcTapeToolCommand implements Callable<Integer>
 {
   @Option(names = { "-V", "--version" }, versionHelp = true, description = "Zeigt die Versioninfo an und beendet das Programm")
@@ -172,4 +176,49 @@ public class KcTapeToolCommand implements Callable<Integer>
     return subPath;
   }
 
+  /**
+   * Idee aus der picocli Doku übernommen: https://github.com/remkop/picocli/blob/main/picocli-examples/src/main/java/picocli/examples/VersionProviderDemo2.java
+   */
+  static class ManifestVersionProvider implements IVersionProvider
+  {
+    private static final String APP_NAME = "KC Tape Tool";
+    private static final String ATT_IMPLEMENTATION_TITLE = "Implementation-Title";
+    private static final String ATT_IMPLEMENTATION_VERSION = "Implementation-Version";
+
+    @Override
+    public String[] getVersion() throws Exception
+    {
+      Manifest manifest = loadManifest();
+      if( manifest == null )
+      {
+        return new String[] {"unbekannt"};
+      }
+      Attributes attr = manifest.getMainAttributes();
+      return new String[] { attr.getValue(ATT_IMPLEMENTATION_VERSION) };
+    }
+
+    private Manifest loadManifest() throws IOException
+    {
+      Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/MANIFEST.MF");
+      while( resources.hasMoreElements() )
+      {
+        URL url = resources.nextElement();
+        try (InputStream is = url.openStream())
+        {
+          Manifest manifest = new Manifest(is);
+          Attributes attributes = manifest.getMainAttributes();
+          if( APP_NAME.equals(get(attributes, ATT_IMPLEMENTATION_TITLE)) )
+          {
+            return manifest;
+          }
+        }
+      }
+      return null;
+    }
+
+    private static Object get(Attributes attributes, String key)
+    {
+      return attributes.get(new Attributes.Name(key));
+    }
+  }
 }
