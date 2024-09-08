@@ -83,6 +83,11 @@ Im Hauptverzeichnis von KcTapeTools einmal
 ausführen. Damit wird das Projekt compiliert und unter build/distributions ein Tar und ein Zip mit dem kompilierten Programm abgelegt. Das kann an 
 beliebiger Stelle entpackt werde. Das KCTapeTool wird mit einem der Skripte im `bin/` Ordner gestartet. 
 
+## Versionen
+
+0.2.0 Unterstützung zum Lesen von TAP Dateien
+0.1.0 erste Version mit grundlegenden Funktionen zum Lesen und Schreiben von Audio- KCC Dateien
+
 ## Wie funktioniert die Audioanalyse
 
 Die Datenaufzeichnung auf Kassetten geschieht beim KC 85/x durch verschiedene Töne. Im [Systemhandbuch](http://www.kc85.info/index.php/download-topmenu/download/32-handbuecher/401-kc85-5-systemhandbuch.html)
