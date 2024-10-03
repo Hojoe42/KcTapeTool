@@ -4,7 +4,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.*;
 
@@ -149,7 +148,7 @@ class KcTapeToolTest
 
     kcTapeTool.execute();
 
-    verify(audioWriterMock).copy(any(KcAudioInputStream.class), eq(sdlMock));
+    verify(audioWriterMock).schreibeAudioMixer(ArgumentMatchers.anyList(), isNull());
   }
 
   /** Ausgabe auf dem "Kopfhörer" Mixer */
@@ -171,7 +170,7 @@ class KcTapeToolTest
 
     kcTapeTool.execute();
 
-    verify(audioWriterMock).copy(any(KcAudioInputStream.class), eq(sdlMock));
+    verify(audioWriterMock).schreibeAudioMixer(ArgumentMatchers.anyList(), eq("Kopfhörer Mixer"));
   }
 
   @Test

@@ -19,6 +19,25 @@ public class AudioReader
   /** {@link Info} Objekt für Aufnahme Geräte. */
   private static final Line.Info inputLineInfo = new Line.Info(TargetDataLine.class);
 
+  private boolean playback = false;
+  private String playbackDevice;
+
+  /**
+   * Aktiviert oder deaktiviert das Playback.
+   */
+  public void setPlayback(boolean playback)
+  {
+    this.playback = playback;
+  }
+
+  /**
+   * Setzt das zu verwendende Playback Ausgabegerät.
+   */
+  public void setPlaybackDevice(String playbackDevice)
+  {
+    this.playbackDevice = playbackDevice;
+  }
+
   /**
    * Liest die angegebene WAV Datei ein, interpretiert die Signale und liefert die binären Daten in Form einer {@link KcDatei} zurück.
    *
@@ -68,12 +87,12 @@ public class AudioReader
   {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     AudioInput audioInput = createAudioInputStream(inputMixerName);
-    AudioInputStream ais = audioInput.ais;
     audioInput.line.start();
+    AudioInputStream ais = konfigurierePlayback(audioInput.ais);
     try( NullDurchgangWaveAnalyzer waveAnalyzer = new NullDurchgangWaveAnalyzer(ais) )
     {
       KcKassettenReader kcKassettenReader = new KcKassettenReader(waveAnalyzer);
-      executor.schedule(new RunnableImplementation(ais, kcKassettenReader), readTimeout, TimeUnit.SECONDS);
+      executor.schedule(new TimeOutRunnable(audioInput.ais, kcKassettenReader), readTimeout, TimeUnit.SECONDS);
       KcDatei kcDatei = kcKassettenReader.leseDatei();
       if(!kcKassettenReader.isAnfangGefunden())
       {
@@ -90,10 +109,29 @@ public class AudioReader
       executor.shutdownNow();
       try
       {
-        executor.awaitTermination(0, TimeUnit.SECONDS);
+        executor.awaitTermination(1, TimeUnit.SECONDS);
       }
       catch( InterruptedException e )  { /* ignore */  }
     }
+  }
+
+  @SuppressWarnings("resource")
+  private AudioInputStream konfigurierePlayback(AudioInputStream ais)
+  {
+    if(!playback)
+    {
+      return ais;
+    }
+    AudioWriter audioWriter = new AudioWriter();
+    Mixer ausgabeMixer = audioWriter.getAusgabeMixer(playbackDevice);
+    if(ausgabeMixer == null)
+    {
+      return ais;
+    }
+    StreamCopy streamCopy = new StreamCopy(ais, 2);
+    List<AudioInputStream> audioStreams = streamCopy.getAudioStreams();
+    audioWriter.schreibeZumMixerMixer(audioStreams.get(0), ausgabeMixer,false);
+    return audioStreams.get(1);
   }
 
   /**
@@ -155,7 +193,7 @@ public class AudioReader
    * Erzeugt einen {@link AudioInputStream} für die übergebene Datei.
    *
    * @param inputPath Pfad zu einer WAV Datei
-   * @throws IOException bei
+   * @throws IOException wenn das Wave Format nicht unterstützt wird.
    */
   @SuppressWarnings("resource")
   public AudioInputStream createAudioStream(Path inputPath) throws IOException
@@ -255,12 +293,12 @@ public class AudioReader
     return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
   }
 
-  private static final class RunnableImplementation implements Runnable
+  private static final class TimeOutRunnable implements Runnable
   {
     private final AudioInputStream ais;
     private final KcKassettenReader kcKassettenReader;
 
-    private RunnableImplementation(AudioInputStream ais, KcKassettenReader kcKassettenReader)
+    private TimeOutRunnable(AudioInputStream ais, KcKassettenReader kcKassettenReader)
     {
       this.ais = ais;
       this.kcKassettenReader = kcKassettenReader;

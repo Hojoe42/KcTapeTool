@@ -19,31 +19,118 @@ public class AudioWriter
   /** {@link Info} Objekt für Abspiel Geräte. */
   private static final Line.Info outputLineInfo = new Line.Info(SourceDataLine.class);
 
+  private boolean playback;
+  private String playbackDevice;
+
   /**
-   * Kopiert alle Daten aus dem {@link KcAudioInputStream} in die {@link SourceDataLine}.
+   * Aktiviert oder deaktiviert das Playback.
    */
-  public void copy(KcAudioInputStream kcAudioInputStream, SourceDataLine sourceLine) throws IOException
+  public void setPlayback(boolean playback)
   {
-    int frameSize = kcAudioInputStream.getAudioFormat().getFrameSize();
-    // der Puffer muss ein vielfaches der Framesize sein
-    byte[] audioPuffer = new byte[frameSize * 64 * 1024];
-    int readCount = 0;
-    while( (readCount = kcAudioInputStream.read(audioPuffer, 0, audioPuffer.length)) != -1 )
+    this.playback = playback;
+  }
+
+  /**
+   * Setzt das zu verwendende Playback Ausgabegerät.
+   */
+  public void setPlaybackDevice(String playbackDevice)
+  {
+    this.playbackDevice = playbackDevice;
+  }
+
+
+  @SuppressWarnings("resource")
+  public void schreibeAudioMixer(List<KcDatei> kcDatei, String ausgabeMixerName)
+  {
+    Mixer mixer = getAusgabeMixer(ausgabeMixerName);
+    try( KcAudioInputStream kcAudioInputStream = new KcAudioInputStream(kcDatei) )
     {
-      if( readCount >= 0 )
+      Mixer playbackMixer = null;
+      if( playback )
       {
-        int writeCount = sourceLine.write(audioPuffer, 0, readCount);
-        if(writeCount < readCount)
+        playbackMixer = getAusgabeMixer(playbackDevice);
+      }
+      StreamCopy streamCopy = new StreamCopy(kcAudioInputStream, playbackMixer == null ? 1 : 2);
+      List<AudioInputStream> audioStreams = streamCopy.getAudioStreams();
+      if( playbackMixer != null )
+      {
+        schreibeZumMixerMixer(audioStreams.get(1), playbackMixer, false);
+      }
+      schreibeZumMixerMixer(audioStreams.get(0), mixer, true);
+    }
+    catch( IOException e )
+    {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  public void schreibeZumMixerMixer(AudioInputStream ais, Mixer mixer, boolean synchron)
+  {
+    DataLine.Info info = new DataLine.Info(SourceDataLine.class, ais.getFormat());
+    try
+    {
+      @SuppressWarnings("resource") // wird im copy geschlossen
+      SourceDataLine sourceLine = (SourceDataLine)mixer.getLine(info);
+      sourceLine.open(ais.getFormat());
+      sourceLine.start();
+      copy(ais, sourceLine, synchron);
+    }
+    catch( LineUnavailableException e )
+    {
+      throw new RuntimeException("Fehler beim Öffnen des Mixers: " + mixer.getMixerInfo().getName(), e);
+    }
+  }
+
+  /**
+   * Kopiert alle Daten aus dem übergebenen {@link InputStream} in die {@link SourceDataLine}.
+   */
+  public void copy(InputStream inputStream, SourceDataLine sourceLine, boolean synchron)
+  {
+    Runnable runable = () ->
+    {
+      try
+      {
+        // der Puffer muss ein vielfaches der Framesize sein
+        int frameSize = sourceLine.getFormat().getFrameSize();
+        int bufferSize = Math.min(sourceLine.getBufferSize(), frameSize * 64 * 1024);
+        byte[] audioPuffer = new byte[bufferSize];
+        int readCount = 0;
+        while( (readCount = inputStream.read(audioPuffer, 0, audioPuffer.length)) != -1 )
         {
-          System.out.println("Ausgabe wurde geschlossen oder gestoppt");
-          break;
+          if( readCount >= 0 )
+          {
+            int writeCount = sourceLine.write(audioPuffer, 0, readCount);
+            if(writeCount < readCount)
+            {
+              System.out.println("Ausgabe [" + sourceLine.getLineInfo() + "] wurde geschlossen oder gestoppt");
+              break;
+            }
+          }
         }
       }
+      catch( IOException e )
+      {
+        throw new UncheckedIOException(e);
+      }
+      finally
+      {
+        sourceLine.close();
+      }
+    };
+    if(synchron)
+    {
+      runable.run();
+    }
+    else
+    {
+      new Thread(runable, "AudioWriter Playback Thread").start();
     }
   }
 
   /**
    * Liefert den Ausgabemixer zum übergebenen Namen oder falls der <code>null</code> ist, den Defaultmixer.
+   *
+   * @return einen Ausgabemixer oder null falls es keinen gibt.
    */
   public Mixer getAusgabeMixer(String ausgabeMixerName)
   {

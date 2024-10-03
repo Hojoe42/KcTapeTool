@@ -149,6 +149,8 @@ public class KcTapeTool
       }
       case AUDIO_MIXER :
       {
+        audioReader.setPlaybackDevice(konfig.getPlaybackDevice());
+        audioReader.setPlayback(konfig.isPlayback());
         KcDatei kdDatei = audioReader.leseMixerDaten(audioReader.getEingabeMixerName(konfig.getSource()), konfig.getTimeout());
         return Collections.singletonList(kdDatei);
       }
@@ -173,6 +175,11 @@ public class KcTapeTool
       }
       case AUDIO_MIXER :
       {
+        if(inputModus == Modus.AUDIO_FILE || inputModus == Modus.DATA_FILE)
+        {
+          audioWriter.setPlaybackDevice(konfig.getPlaybackDevice());
+          audioWriter.setPlayback(konfig.isPlayback());
+        }
         schreibeAudioMixer(kcDatei);
         break;
       }
@@ -181,30 +188,9 @@ public class KcTapeTool
     }
   }
 
-  @SuppressWarnings("resource")
   private void schreibeAudioMixer(List<KcDatei> kcDatei)
   {
-    Mixer mixer = audioWriter.getAusgabeMixer(getAusgabeMixerName());
-    try( KcAudioInputStream kcAudioInputStream = new KcAudioInputStream(kcDatei) )
-    {
-      AudioFormat audioFormat = kcAudioInputStream.getAudioFormat();
-      DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
-      try( SourceDataLine sourceLine = (SourceDataLine)mixer.getLine(info) )
-      {
-        sourceLine.open(audioFormat);
-        sourceLine.start();
-        audioWriter.copy(kcAudioInputStream, sourceLine);
-        sourceLine.drain();
-      }
-      catch( LineUnavailableException e )
-      {
-        throw new IOException("Fehler beim Öffnen der Ausgabe", e);
-      }
-    }
-    catch( IOException e )
-    {
-      throw new UncheckedIOException(e);
-    }
+    audioWriter.schreibeAudioMixer(kcDatei, getAusgabeMixerName());
   }
 
   private void listInputGeraete()

@@ -92,7 +92,7 @@ class KcTapeToolCommandTest
     CommandLine cmd = new CommandLine(command).setOut(printWriter);
     int exitCode = cmd.execute("--list");
     assertThat(exitCode, is(ExitCode.OK));
-    assertThat(command.list, is(true));
+    assertThat(command.isList(), is(true));
   }
 
   @Test
@@ -102,7 +102,7 @@ class KcTapeToolCommandTest
     CommandLine cmd = new CommandLine(command).setOut(printWriter);
     int exitCode = cmd.execute("-l");
     assertThat(exitCode, is(ExitCode.OK));
-    assertThat(command.list, is(true));
+    assertThat(command.isList(), is(true));
   }
 
   @Test
@@ -112,7 +112,6 @@ class KcTapeToolCommandTest
     CommandLine cmd = new CommandLine(command).setOut(printWriter);
     int exitCode = cmd.execute("--source", "/home/xyz/test.wav");
     assertThat(exitCode, is(ExitCode.OK));
-    assertThat(command.source, is("/home/xyz/test.wav"));
     assertThat(command.getSource(), is("/home/xyz/test.wav"));
   }
 
@@ -123,7 +122,6 @@ class KcTapeToolCommandTest
     CommandLine cmd = new CommandLine(command).setOut(printWriter);
     int exitCode = cmd.execute("-s", "/home/xyz/test.wav");
     assertThat(exitCode, is(ExitCode.OK));
-    assertThat(command.source, is("/home/xyz/test.wav"));
     assertThat(command.getSource(), is("/home/xyz/test.wav"));
   }
 
@@ -134,7 +132,6 @@ class KcTapeToolCommandTest
     CommandLine cmd = new CommandLine(command).setOut(printWriter);
     int exitCode = cmd.execute("--destination", "/home/xyz/test.wav");
     assertThat(exitCode, is(ExitCode.OK));
-    assertThat(command.destination, is("/home/xyz/test.wav"));
     assertThat(command.getDestination(), is("/home/xyz/test.wav"));
   }
 
@@ -145,7 +142,6 @@ class KcTapeToolCommandTest
     CommandLine cmd = new CommandLine(command).setOut(printWriter);
     int exitCode = cmd.execute("-d", "/home/xyz/test.wav");
     assertThat(exitCode, is(ExitCode.OK));
-    assertThat(command.destination, is("/home/xyz/test.wav"));
     assertThat(command.getDestination(), is("/home/xyz/test.wav"));
   }
 
@@ -156,7 +152,6 @@ class KcTapeToolCommandTest
     CommandLine cmd = new CommandLine(command).setOut(printWriter);
     int exitCode = cmd.execute("--wait", "30");
     assertThat(exitCode, is(ExitCode.OK));
-    assertThat(command.timeout, is(30));
     assertThat(command.getTimeout(), is(30));
   }
 

@@ -2,6 +2,12 @@ package de.hojoe.kctapetool;
 
 import java.io.IOException;
 
+/**
+ * Schnittstelle zum Analysieren der Schwingungen um die Logischen Einsen und Nullen zu finden.
+ *
+ *
+ * @author Holger Jödicke
+ */
 public interface WaveAnalyzer extends AutoCloseable
 {
 
@@ -37,8 +43,14 @@ public interface WaveAnalyzer extends AutoCloseable
    */
   boolean leseTrennzeichen();
 
+  /**
+   * Prüft ob an der aktuellen Position eine EINS Schwingung vorliegt. Die Position wird nicht verändert.
+   */
   boolean isEinsSchwingung() throws IOException;
 
+  /**
+   * Prüft ob an der aktuellen Position eine Trennzeichen vorliegt. Die Position wird nicht verändert.
+   */
   boolean isTrennzeichen() throws IOException;
 
   /**
@@ -48,6 +60,9 @@ public interface WaveAnalyzer extends AutoCloseable
    */
   int leseDatenByte(boolean letztes) throws IOException, WaveAnalyzerException;
 
+  /**
+   * Liefert die Nummer des nächsten Frames. Wurde noch nichts gelesen, dann wird 0 zurück geliefert.
+   */
   long getFramePos();
 
   @Override

@@ -13,19 +13,38 @@ import javax.sound.sampled.*;
  */
 public class StreamCopy
 {
-  private AudioInputStream inputStream;
+  private InputStream inputStream;
+  private int frameSize;
   private List<OutputStream> outputStreams = new ArrayList<>();
   private List<AudioInputStream> audioStreams = new ArrayList<>();
 
+
   /**
-   * Erzeugt die entsprechende Anzahl an {@link AudioInputStream}s und kopiert alle Daten aus dem übergebenen AudioInputStream in die Ziel Stream.
+   * Erzeugt die entsprechende Anzahl an {@link AudioInputStream}s und kopiert alle Daten aus dem übergebenen AudioInputStream in die Ziel Streams.
+   *
    * @param inputStream der Quell Stream.
    */
-  @SuppressWarnings("resource")
+  public StreamCopy(KcAudioInputStream inputStream, int anzahl)
+  {
+    this.inputStream = Objects.requireNonNull(inputStream);
+    konfiguriereStreams(anzahl, inputStream.getAudioFormat());
+  }
+
+  /**
+   * Erzeugt die entsprechende Anzahl an {@link AudioInputStream}s und kopiert alle Daten aus dem übergebenen AudioInputStream in die Ziel Streams.
+   *
+   * @param inputStream der Quell Stream.
+   */
   public StreamCopy(AudioInputStream inputStream, int anzahl)
   {
     this.inputStream = Objects.requireNonNull(inputStream);
-    AudioFormat audioFormat = inputStream.getFormat();
+    konfiguriereStreams(anzahl, inputStream.getFormat());
+  }
+
+  @SuppressWarnings("resource")
+  private void konfiguriereStreams(int anzahl, AudioFormat audioFormat)
+  {
+    frameSize = audioFormat.getFrameSize();
     for( int i = 0; i < anzahl; i++ )
     {
       try
@@ -40,7 +59,7 @@ public class StreamCopy
         throw new RuntimeException(e);
       }
     }
-    new Thread(new StreamCopyRunnable()).start();
+    new Thread(new StreamCopyRunnable(), "StreamCopyThread").start();
   }
 
   /**
@@ -62,9 +81,9 @@ public class StreamCopy
     {
       try
       {
-        byte[] bytes = new byte[64 * inputStream.getFormat().getFrameSize()];
+        byte[] bytes = new byte[64 * frameSize];
         int anzahl;
-        while( (anzahl = inputStream.read(bytes, 0, bytes.length)) >= 0 )
+        while( (anzahl = inputStream.read(bytes, 0, bytes.length)) > 0 )
         {
           for( OutputStream os : outputStreams )
           {

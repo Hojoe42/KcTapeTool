@@ -18,13 +18,13 @@ import picocli.CommandLine.*;
 public class KcTapeToolCommand implements Callable<Integer>
 {
   @Option(names = { "-V", "--version" }, versionHelp = true, description = "Zeigt die Versioninfo an und beendet das Programm")
-  boolean versionInfoRequested;
+  private boolean versionInfoRequested;
 
   @Option(names = { "-h", "--help" }, usageHelp = true, description = "Zeigt diese Hilfe und beendet das Programm")
-  boolean usageHelpRequested;
+  private boolean usageHelpRequested;
 
   @Option(names = { "-l", "--list" }, description = "Gibt die Sound Eingabe- und Ausgabekanäle aus.")
-  boolean list;
+  private boolean list;
 
   @Option(names = { "--directory" },
     description = "Arbeitsverzeichnis in das Dateien geschrieben oder von dem Dateien gelesen werden. Wenn nicht angegeben, wird das aktuelle Verzeichnis verwendet",
@@ -34,15 +34,23 @@ public class KcTapeToolCommand implements Callable<Integer>
   @Option(names = { "-s", "--source"},
     description = "Die Quelle, daraus wird gelesen. Kann eine Datei oder ein Sound Eingang sein.",
     paramLabel = "<Datei | Soundeingang>")
-  String source;
+  private String source;
 
   @Option(names = { "-d", "--destination" },
     description = "Das Ausgabe Ziel zu dem geschrieben wird. Kann eine Datei oder ein Sound Ausgang sein. Kann entfallen, wenn sich der Dateiname aus den gelesenen Daten ergibt",
     paramLabel = "<Datei | Soundausgang>")
-  String destination;
+  private String destination;
 
   @Option(names = { "--wait" }, defaultValue = "60", description = "Definiert die Dauer der Wartezeit beim Lesen von einem Soundeingang in Sekunden.")
-  int timeout;
+  private int timeout;
+
+  @Option(names = {"-p", "--playback"}, description = "Parallele Wiedergabe der Sound Daten zum mithören-")
+  private boolean playback;
+
+  @Option(names = { "--playback-device" },
+    description = "Der Name des Wiedergabe Gerätes zum parallelem mithören der Sound Daten.",
+    paramLabel = "<Soundausgang>")
+  private String playbackDevice;
 
   @Override
   public Integer call() throws Exception
@@ -161,6 +169,38 @@ public class KcTapeToolCommand implements Callable<Integer>
   public void setTimeout(int timeout)
   {
     this.timeout = timeout;
+  }
+
+  /**
+   * @return the playback
+   */
+  public boolean isPlayback()
+  {
+    return playback;
+  }
+
+  /**
+   * @param playback the playback to set
+   */
+  public void setPlayback(boolean playback)
+  {
+    this.playback = playback;
+  }
+
+  /**
+   * @return the playbackDevice
+   */
+  public String getPlaybackDevice()
+  {
+    return playbackDevice;
+  }
+
+  /**
+   * @param playbackDevice the playbackDevice to set
+   */
+  public void setPlaybackDevice(String playbackDevice)
+  {
+    this.playbackDevice = playbackDevice;
   }
 
   /**
