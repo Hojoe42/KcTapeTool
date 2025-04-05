@@ -13,6 +13,14 @@ import java.util.Arrays;
   private int checksumme;
   private byte[] daten;
 
+  /**
+   * Erzeugt einen neuen {@link KcDateiBlock}.
+   *
+   * @param blocknummer die Blocknummer, 1-indiziert
+   * @param checksumme die Checksumme der Nutzdaten
+   * @param blockDaten die eigentlichen Nutzdaten
+   * @see #berechneChecksumme(byte[])
+   */
   public KcDateiBlock(int blocknummer, int checksumme, byte[] blockDaten)
   {
     this.blocknummer = blocknummer;
@@ -24,11 +32,17 @@ import java.util.Arrays;
     daten = blockDaten;
   }
 
+  /**
+   * Liefert die Blocknummer 1-indiziert.
+   */
   public int getBlocknummer()
   {
     return blocknummer;
   }
 
+  /**
+   * Liefert die Checksummer. Sie liegt im Bereich von 0-255.
+   */
   public int getChecksumme()
   {
     return 0xff & checksumme;
@@ -52,7 +66,7 @@ import java.util.Arrays;
   @Override
   public String toString()
   {
-    return "KcDateiBlock [blocknummer=" + blocknummer + ", checksumme=" + checksumme + ", daten=" + Arrays.toString(daten) + "]";
+    return "KcDateiBlock [blocknummer=" + blocknummer + ", checksumme=" + Integer.toHexString(checksumme) + "H, daten=" + Arrays.toString(daten) + "]";
   }
 
 

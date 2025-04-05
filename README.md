@@ -85,8 +85,9 @@ beliebiger Stelle entpackt werde. Das KCTapeTool wird mit einem der Skripte im `
 
 ## Versionen
 
-0.2.0 Unterstützung zum Lesen von TAP Dateien
-0.1.0 erste Version mit grundlegenden Funktionen zum Lesen und Schreiben von Audio- KCC Dateien
+* 0.2.1 Fix für TAP Dateien mit 0-indizierten Blocknummern
+* 0.2.0 Unterstützung zum Lesen von TAP Dateien
+* 0.1.0 erste Version mit grundlegenden Funktionen zum Lesen und Schreiben von Audio- KCC Dateien
 
 ## Wie funktioniert die Audioanalyse
 

@@ -3,7 +3,10 @@ package de.hojoe.kctapetool;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+import java.io.IOException;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.util.*;
 
 import org.junit.jupiter.api.Test;
@@ -75,11 +78,36 @@ class TapReaderTest
     assertThat(TapReader.isTap1Datei("fas ist kein TAP Header".getBytes(StandardCharsets.ISO_8859_1)), is(false));
   }
 
+  /**
+   * IndexOutOfBoundsException Z9001 TAP Datei
+   */
+  @Test
+  void testIssue1() throws IOException, URISyntaxException
+  {
+    Path deepspace = createPath("/DEEPSPACE.TAP");
+    byte[] tap = Files.readAllBytes(deepspace);
+    TapReader tapReader = new TapReader(tap);
+
+    // laden ohne Fehler!?
+    List<KcDatei> kcDateien = tapReader.loadTap1Datei();
+
+    assertThat(kcDateien, is(notNullValue()));
+  }
+
   private byte[] createAndFill(int length, byte content)
   {
     byte[] array = new byte[length];
     Arrays.fill(array, content);
     return array;
+  }
+
+  /**
+   * Erzeugt ein Path Objekt zu einer Datei im (Test-) Klassenpfad.
+   */
+  private Path createPath(String resourceName) throws URISyntaxException
+  {
+    URL url = getClass().getResource(resourceName);
+    return Paths.get(url.toURI());
   }
 
 }

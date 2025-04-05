@@ -31,6 +31,7 @@ public class KcTapeToolTestMain
   args = new String[] { "-s", "3D-OTHEL.TAP", "-d", "out.wav", "--directory", "d:/tmp/kc/tap"}; // 3D-OTHEL.TAP enthält eine Datei
 //  args = new String[] { "-s", "3D-OTHEL.TAP", "-d", "out.kcc", "--directory", "d:/tmp/kc/tap"}; // 3D-OTHEL.TAP enthält eine Datei
 //  args = new String[] { "-s", "S-KROETE.855", "-d", "KROETE.kcc", "--directory", "d:/tmp/kc/tap"};  // enthält 3 Dateien
+//  args = new String[] { "-s", "d:/tmp/kc/tap/DEEPSPACE.TAP", };  // Issue/1
     int rc = new CommandLine(new KcTapeToolCommand()).execute(args);
     System.exit(rc);
   }

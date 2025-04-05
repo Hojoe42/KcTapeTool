@@ -6,6 +6,14 @@ import java.util.*;
 /**
  * Code zum lesen von TAP Dateien.
  *
+ * <ul>
+ *   <li>Am Anfang kommen 16 Byte mit folgendem Inhalt: C3 4B 43 2D 54 41 50 45 20 62 79 20 41 46 2E 20</li>
+ *   <li>Danach folgen 129 Byte Blöcke</li>
+ *   <li>Jeder Block enthält am Anfang 1 Byte mit der Blocknummer, danach folgen 128 Bytes mit den Nutzdaten.</li>
+ *   <li>Die Blocknummer kann 0- oder 1-indiziert sein.</li>
+ *   <li>Der letzte Block hat normalerweise die Blocknummer FFh</li>
+ * </ul>
+ *
  * @author Holger Jödicke
  */
 public class TapReader
@@ -43,22 +51,25 @@ public class TapReader
     return list;
   }
 
+  /**
+   * Liest die nächste Datei aus dem (Multi-) TAP Container.
+   */
   private KcDatei loadNext()
   {
     KcDatei kcDatei = new KcDatei();
-    int blockNr = 0;
-    while(blockNr != 0xff)
+    int blockNr = 1;
+    int geleseneBlockNr = 0;
+    while(geleseneBlockNr != 0xff)
     {
       if(index + 1 + KcDateiBlock.BLOCK_SIZE > allBytes.length)
       {
         throw new RuntimeException("Datei zu kurz oder fehlende 'FF' Blocknummer");
       }
-      blockNr = 0xff & allBytes[index];
-      index++;
+      geleseneBlockNr = 0xff & allBytes[index++];
       byte[] blockData = new byte[KcDateiBlock.BLOCK_SIZE];
       System.arraycopy(allBytes, index, blockData, 0, KcDateiBlock.BLOCK_SIZE);
       index += KcDateiBlock.BLOCK_SIZE;
-      kcDatei.add(new KcDateiBlock(blockNr, KcDateiBlock.berechneChecksumme(blockData), blockData));
+      kcDatei.add(new KcDateiBlock(blockNr++, KcDateiBlock.berechneChecksumme(blockData), blockData));
     }
     return kcDatei;
   }
