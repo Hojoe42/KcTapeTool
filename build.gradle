@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'de.hojoe.kctapetool'
-version = '0.3.0'
+version = '0.2.1'
 compileJava.options.encoding = 'UTF-8'
 
 tasks.withType(JavaCompile) {
