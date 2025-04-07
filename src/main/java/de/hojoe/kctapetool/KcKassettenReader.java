@@ -2,6 +2,8 @@ package de.hojoe.kctapetool;
 
 import java.io.IOException;
 
+import de.hojoe.kctapetool.analyzer.*;
+
 public class KcKassettenReader
 {
 

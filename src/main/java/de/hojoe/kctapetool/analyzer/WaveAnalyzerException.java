@@ -1,4 +1,4 @@
-package de.hojoe.kctapetool;
+package de.hojoe.kctapetool.analyzer;
 
 /**
  * Fehler beim Analysieren einer KC Wave Datei / -Stream.

@@ -1,4 +1,4 @@
-package de.hojoe.kctapetool;
+package de.hojoe.kctapetool.analyzer;
 
 import java.io.IOException;
 

@@ -75,7 +75,7 @@ class TapReaderTest
   @Test
   void testIsTap1DateiPositivNegativ2()
   {
-    assertThat(TapReader.isTap1Datei("fas ist kein TAP Header".getBytes(StandardCharsets.ISO_8859_1)), is(false));
+    assertThat(TapReader.isTap1Datei("das ist kein TAP Header".getBytes(StandardCharsets.ISO_8859_1)), is(false));
   }
 
   /**

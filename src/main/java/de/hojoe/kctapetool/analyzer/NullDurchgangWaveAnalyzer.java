@@ -1,4 +1,4 @@
-package de.hojoe.kctapetool;
+package de.hojoe.kctapetool.analyzer;
 
 import java.io.IOException;
 import java.util.*;
@@ -8,7 +8,7 @@ import javax.sound.sampled.AudioInputStream;
 
 import org.apache.commons.io.IOUtils;
 
-import de.hojoe.kctapetool.SchwingungKonfig.BitKonfig;
+import de.hojoe.kctapetool.*;
 
 /**
  * Analysiert die Wave Daten anhand der Null Durchgänge bei jeder Schwingung.
@@ -20,7 +20,7 @@ public class NullDurchgangWaveAnalyzer implements WaveAnalyzer
   private IntegerStream is;
   private AtomicLong framePos = new AtomicLong(0);
   private ArrayDeque<Integer> puffer = new ArrayDeque<>(100);
-  private SchwingungKonfig bitKonfig = new SchwingungKonfig();
+  private SchwingungKonfig bitKonfig = new Kc85xSchwingungKonfig();
 
   public NullDurchgangWaveAnalyzer(AudioInputStream ais)
   {

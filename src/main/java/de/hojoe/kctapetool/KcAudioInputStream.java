@@ -5,19 +5,19 @@ import java.util.*;
 
 import javax.sound.sampled.AudioFormat;
 
-import de.hojoe.kctapetool.SchwingungKonfig.BitKonfig;
+import de.hojoe.kctapetool.analyzer.*;
 
 public class KcAudioInputStream extends InputStream
 {
-  final static float sampleRate = 44100;
-  final static int sampleSizeInBits = 16;
-  final static int channels = 1;
-  final static boolean signed = true;
-  final static boolean bigEndian = false;
+  private final static float sampleRate = 44100;
+  private final static int sampleSizeInBits = 16;
+  private final static int channels = 1;
+  private final static boolean signed = true;
+  private final static boolean bigEndian = false;
   private final static Integer minSample = (int)Short.MIN_VALUE;
   private final static Integer maxSample = (int)Short.MAX_VALUE;
-  private final static SchwingungKonfig bitKonfig = new SchwingungKonfig();
 
+  private final SchwingungKonfig bitKonfig = new Kc85xSchwingungKonfig();
   private ArrayList<Integer> daten = new ArrayList<>();
   private int index = 0;
 

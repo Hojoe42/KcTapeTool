@@ -8,6 +8,8 @@ import java.util.concurrent.*;
 import javax.sound.sampled.*;
 import javax.sound.sampled.Line.Info;
 
+import de.hojoe.kctapetool.analyzer.NullDurchgangWaveAnalyzer;
+
 
 /**
  * Code zum Einlesen von Sound Daten und extrahieren der aufmodulierten Daten.
